@@ -1,0 +1,146 @@
+/* Shared look of the popup and the options page. Colors are tokens so dark mode
+   only has to redefine them; the brand colors match src/icons/icon.svg. */
+:root {
+  color-scheme: light dark;
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --border: #dde3ec;
+  --text: #0f172a;
+  --muted: #5b6577;
+  --brand: #2563eb;
+  --brand-2: #14b8a6;
+  --brand-text: #ffffff;
+  --brand-soft: #e0eaff;
+  --danger: #c0262d;
+  --focus: #2563eb;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1220;
+    --surface: #161d2e;
+    --surface-2: #1f2840;
+    --border: #2a3552;
+    --text: #e7ecf5;
+    --muted: #9aa6bd;
+    --brand: #5b8cff;
+    --brand-2: #2dd4bf;
+    --brand-text: #0b1020;
+    --brand-soft: #1e2b4d;
+    --danger: #ff7b7f;
+    --focus: #8fb0ff;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+h1, h2 { margin: 0; line-height: 1.25; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Header with the icon and product name */
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 32px; height: 32px; flex: none; }
+.brand h1 { font-size: 15px; font-weight: 700; }
+.brand p { margin: 0; color: var(--muted); font-size: 12px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Buttons */
+button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: filter 0.15s, background 0.15s;
+}
+button:hover:not(:disabled) { filter: brightness(0.96); }
+button:disabled { cursor: default; color: var(--muted); background: transparent; }
+button.primary {
+  background: linear-gradient(135deg, var(--brand-2), var(--brand));
+  border-color: transparent;
+  color: var(--brand-text);
+}
+button.primary:hover { filter: brightness(1.06); }
+button.link {
+  background: none;
+  border: none;
+  padding: 4px 2px;
+  color: var(--brand);
+  font-weight: 500;
+}
+button.link:hover { text-decoration: underline; filter: none; }
+
+/* Text inputs */
+input[type=number], textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+}
+input[type=number] { width: 5.5em; }
+textarea { width: 100%; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; resize: vertical; }
+
+/* Checkbox shown as a switch; still a native checkbox for keyboard and screen readers.
+   No transition: the saved state is applied after load and would visibly animate. */
+input.switch {
+  appearance: none;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+}
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+input.switch:checked { background: var(--brand); }
+input.switch:checked::after { transform: translateX(16px); }
+
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+#status { min-height: 1.4em; margin: 0; color: var(--muted); font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

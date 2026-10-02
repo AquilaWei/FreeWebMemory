@@ -34,6 +34,11 @@ export function renderStats(doc: Document, stats: Stats, memory?: MemoryInfo): v
     "system-memory",
     memory ? `${formatBytes(memory.availableCapacity)} of ${formatBytes(memory.capacity)}` : "unknown",
   );
+  const meter = doc.getElementById("memory-meter") as HTMLMeterElement | null;
+  if (meter) {
+    meter.hidden = !memory || memory.capacity <= 0;
+    meter.value = memory && memory.capacity > 0 ? memory.availableCapacity / memory.capacity : 0;
+  }
 }
 
 const FROZEN_LABELS = { active: "In use", discarded: "Frozen", unsupported_url: "Not supported" } as const;

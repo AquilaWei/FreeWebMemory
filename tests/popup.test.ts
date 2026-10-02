@@ -61,6 +61,18 @@ describe("renderStats", () => {
     renderStats(document, { discardedCount: 0, estimatedBytesSaved: 0 });
     expect(el("system-memory").textContent).toBe("unknown");
   });
+
+  it("fills the memory meter with the available share when memory is known", () => {
+    renderStats(document, { discardedCount: 0, estimatedBytesSaved: 0 }, { capacity: 8 * 1024 ** 3, availableCapacity: 2 * 1024 ** 3 });
+    const meter = el("memory-meter") as HTMLMeterElement;
+    expect(meter.hidden).toBe(false);
+    expect(meter.value).toBe(0.25);
+  });
+
+  it("hides the memory meter when memory is unknown", () => {
+    renderStats(document, { discardedCount: 0, estimatedBytesSaved: 0 });
+    expect(el("memory-meter").hidden).toBe(true);
+  });
 });
 
 describe("formatBytes", () => {

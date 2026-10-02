@@ -4,46 +4,79 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FreeWebMemory options</title>
+    <link rel="stylesheet" href="theme.css" />
     <style>
-      body { font: 14px system-ui, sans-serif; margin: 16px auto; max-width: 560px; }
-      fieldset { margin: 12px 0; }
-      label { display: block; margin: 6px 0; }
-      textarea { width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; }
-      #errors { color: #b00020; }
+      body { font-size: 14px; }
+      main { max-width: 620px; margin: 0 auto; padding: 32px 16px 48px; display: grid; gap: 16px; }
+      .brand img { width: 48px; height: 48px; }
+      .brand h1 { font-size: 20px; }
+      .card { padding: 18px 20px; display: grid; gap: 14px; }
+      .card h2 { font-size: 15px; font-weight: 700; }
+      .hint { margin: -8px 0 0; color: var(--muted); font-size: 12px; }
+      .field { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+      .stacked { display: grid; gap: 6px; }
+      fieldset { border: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+      legend { padding: 0; margin-bottom: 10px; }
+      .check { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+      .check input { width: 16px; height: 16px; margin: 0; accent-color: var(--brand); }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+      #errors { margin: 0; padding: 10px 14px 10px 32px; border-radius: var(--radius-sm); color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+      #errors:empty { display: none; }
+      #status:empty { display: none; }
     </style>
   </head>
   <body>
     <main>
-      <h1>FreeWebMemory options</h1>
+      <header class="brand">
+        <img src="icons/icon-48.png" alt="" />
+        <div>
+          <h1>FreeWebMemory options</h1>
+          <p>Choose when idle tabs are discarded to free memory.</p>
+        </div>
+      </header>
+
       <ul id="errors" role="alert"></ul>
       <p id="status" role="status"></p>
 
-      <form id="settings-form">
-        <label><input type="checkbox" id="enabled" /> Discard idle tabs automatically</label>
-        <label>Idle minutes before a tab is discarded (1-1440)
+      <form id="settings-form" class="card">
+        <h2>Discarding</h2>
+        <label class="toggle-row">Discard idle tabs automatically
+          <input type="checkbox" class="switch" id="enabled" />
+        </label>
+        <label class="field">Idle minutes before a tab is discarded (1-1440)
           <input type="number" id="idle-minutes" min="1" max="1440" step="1" />
         </label>
-        <label>Memory pressure threshold, % of memory still free (0 turns it off, max 50)
+        <label class="field">Memory pressure threshold, % of memory still free (0 turns it off, max 50)
           <input type="number" id="pressure-percent" min="0" max="50" step="1" />
         </label>
+        <p class="hint">Below this level the least recently used tabs are discarded right away, without waiting for the idle time.</p>
+
         <fieldset>
-          <legend>Never discard</legend>
-          <label><input type="checkbox" id="protect-pinned" /> Pinned tabs</label>
-          <label><input type="checkbox" id="protect-audible" /> Tabs playing sound</label>
-          <label><input type="checkbox" id="protect-form-dirty" /> Tabs with unsaved form input</label>
+          <legend class="section-title">Never discard</legend>
+          <label class="check"><input type="checkbox" id="protect-pinned" /> Pinned tabs</label>
+          <label class="check"><input type="checkbox" id="protect-audible" /> Tabs playing sound</label>
+          <label class="check"><input type="checkbox" id="protect-form-dirty" /> Tabs with unsaved form input</label>
         </fieldset>
-        <label>Sites that are never discarded (one per line, subdomains included)
-          <textarea id="whitelist" rows="6"></textarea>
+
+        <label class="stacked">Sites that are never discarded (one per line, subdomains included)
+          <textarea id="whitelist" rows="6" placeholder="example.com"></textarea>
         </label>
-        <button type="submit">Save settings</button>
+        <div class="actions">
+          <button type="submit" class="primary">Save settings</button>
+        </div>
       </form>
 
-      <h2>Export and import</h2>
-      <label>Settings as JSON
-        <textarea id="settings-json" rows="10"></textarea>
-      </label>
-      <button type="button" id="export">Export settings</button>
-      <button type="button" id="import">Import settings</button>
+      <section class="card">
+        <h2>Export and import</h2>
+        <label class="stacked">Settings as JSON
+          <textarea id="settings-json" rows="10"></textarea>
+        </label>
+        <div class="actions">
+          <button type="button" id="export">Export settings</button>
+          <button type="button" id="import">Import settings</button>
+        </div>
+      </section>
     </main>
     <script type="module" src="options.js"></script>
   </body>

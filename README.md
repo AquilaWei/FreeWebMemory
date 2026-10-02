@@ -11,6 +11,9 @@ A **Chrome (Manifest V3)** extension that saves memory by discarding idle tabs, 
 - **Memory-pressure mode:** when free system memory drops under a threshold (default 10%), discards the least recently used eligible tabs first.
 - **Popup:** on/off switch, tabs discarded, estimated memory saved, "Discard other tabs now", "Never discard this site", an idle-minutes field a "More settings" button that opens the options page, and a tab list where **Freeze** discards one chosen tab on demand (ignores the pinned, sound, unsaved-input and whitelist protections because you picked it; the tab in use, already frozen tabs and non-http(s) pages cannot be frozen).
 - **Options page:** every setting, the whitelist, and JSON export/import.
+- **Light and dark mode:** the popup and options page follow the system theme.
+
+<img src="docs/popup.png" alt="The popup: auto-discard switch, statistics, memory bar and the per-tab freeze list" width="340">
 
 ## Build
 

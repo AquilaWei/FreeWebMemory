@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The extension now has its own icon in the toolbar and on the extensions page.
+- Redesigned popup and options page: cards, a toggle switch, a system-memory bar, and automatic light/dark mode.
 - Licensed under GPL-3.0 (added `LICENSE`).
 - Renamed the project to FreeWebMemory (extension name, package name and release zip name).
 

@@ -24,6 +24,7 @@ await build({
 
 await cp("src/popup/popup.html", "dist/popup.html");
 await cp("src/options/options.html", "dist/options.html");
+await cp("src/ui/theme.css", "dist/theme.css");
 // Only the rendered PNGs ship; the SVG sources stay in the repo.
 await cp("src/icons", "dist/icons", { recursive: true, filter: (src) => !src.endsWith(".svg") });
 await writeFile(
