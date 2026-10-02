@@ -78,7 +78,7 @@
         "Estimate is labeled as an estimate in the UI",
         "README documents the heuristic and its limits"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F8",

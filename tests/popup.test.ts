@@ -49,6 +49,10 @@ describe("renderStats", () => {
     expect(el("saved-estimate").textContent).toBe("~400 MB");
   });
 
+  it("labels the saved figure as an estimate in the page", () => {
+    expect(document.body.textContent).toContain("Memory saved (estimate)");
+  });
+
   it("shows system memory when it is known and 'unknown' otherwise", () => {
     renderStats(document, { discardedCount: 0, estimatedBytesSaved: 0 }, { capacity: 8 * 1024 ** 3, availableCapacity: 2 * 1024 ** 3 });
     expect(el("system-memory").textContent).toBe("2.0 GB of 8.0 GB");

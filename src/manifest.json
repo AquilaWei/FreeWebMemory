@@ -12,5 +12,5 @@
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["storage", "tabs", "alarms"]
+  "permissions": ["storage", "tabs", "alarms", "system.memory"]
 }

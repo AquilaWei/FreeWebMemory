@@ -11,3 +11,4 @@
 - Unsaved-input protection now also covers fields inside shadow DOM (web-component forms).
 - Popup: an on/off switch for automatic discarding, the number of tabs discarded and an estimated memory saved (estimate only, Chrome does not report per-tab memory), a "Discard other tabs now" button that skips the idle threshold but still never touches active, pinned, playing, whitelisted or unsaved tabs, and a "Never discard this site" button.
 - Whitelist entries are now stored as bare lowercase hostnames (scheme, path, port and `*.` are stripped, duplicates removed).
+- Savings statistics persist across restarts and can be reset from the popup; the popup also shows the system's available memory (new `system.memory` permission). The README explains how the estimate is calculated and its limits.
