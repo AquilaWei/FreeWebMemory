@@ -33,7 +33,7 @@
         "Unit test: tab exactly at the threshold boundary has a fixed, tested outcome",
         "Policy returns a reason code for every refusal"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F4",
