@@ -1,9 +1,14 @@
 import type { DirtyMessage } from "./messages";
 import { trackDirty } from "./dirty";
 
-trackDirty(document, (dirty) => {
+trackDirty(document, window, (dirty) => {
   const message: DirtyMessage = { type: "form-dirty", dirty };
-  // Rejects if the worker could not be reached; losing one report only means
-  // the tab is treated as clean, so log instead of throwing in the page.
-  chrome.runtime.sendMessage(message).catch((err) => console.warn("Memory Saver: report failed", err));
+  // After the extension reloads or updates this orphaned script's sendMessage
+  // throws synchronously ("Extension context invalidated"); a lost report only
+  // means the tab is treated as clean, so never let it reach the page.
+  try {
+    chrome.runtime.sendMessage(message).catch((err) => console.warn("Memory Saver: report failed", err));
+  } catch (err) {
+    console.warn("Memory Saver: report failed", err);
+  }
 });

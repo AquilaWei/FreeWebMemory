@@ -23,8 +23,8 @@ chrome.tabs.onRemoved.addListener((tabId) => void tracker.remove(tabId));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   // Discarding itself fires onUpdated; that must not restart the idle timer.
   if (changeInfo.discarded !== undefined) return;
-  // A new page load starts with clean forms; the content script only reports changes.
-  if (changeInfo.status === "loading") void tracker.setDirty(tabId, false);
+  // The dirty flag is owned by the content script (it reports false on each new
+  // document); "loading" also fires for same-document navigations, so don't clear here.
   if (changeInfo.url !== undefined || changeInfo.status === "complete") void tracker.touch(tabId);
 });
 

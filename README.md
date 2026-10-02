@@ -21,6 +21,11 @@ The build writes the extension to `dist/`.
 2. Enable **Developer mode**
 3. Click **Load unpacked** and select the `dist/` folder
 
+## Limits of unsaved-input protection
+
+- **Tabs open before install/update** have no content script until reloaded, so typing in them is not protected.
+- **Forms inside iframes** are not covered; only the top-level page is watched.
+
 ## Privacy
 
 No network calls; nothing leaves the browser. Permissions: `storage` keeps your settings in `chrome.storage.sync` (synced by Chrome across your devices) and tab activity times in `chrome.storage.session` (memory only); `tabs` reads tab URLs and state so protected tabs are skipped and idle ones discarded; `alarms` wakes the background worker once a minute to check for idle tabs. A content script runs on http(s) pages (no host permissions) and sends the background only a yes/no "form was edited" flag, so tabs with unsaved input are skipped; no page content is read or sent.

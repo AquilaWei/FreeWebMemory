@@ -170,12 +170,14 @@ describe("background wiring", () => {
     expect(session.dirtyTabs).toBeUndefined();
   });
 
-  it("clears the dirty flag when the tab starts loading a new page", async () => {
-    session.dirtyTabs = [7];
+  it("keeps a tab dirty across a same-document loading update", async () => {
     await loadBackground();
+    listeners.message({ type: "form-dirty", dirty: true }, { id: "me", tab: { id: 7 } });
+    await vi.waitFor(() => expect(session.dirtyTabs).toEqual([7]));
 
     listeners.updated(7, { status: "loading" });
+    await new Promise((r) => setTimeout(r, 20));
 
-    await vi.waitFor(() => expect(session.dirtyTabs).toEqual([]));
+    expect(session.dirtyTabs).toEqual([7]);
   });
 });
