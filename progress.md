@@ -8,6 +8,8 @@ F1 done (scaffold: esbuild build to `dist/`, eslint, vitest, stub background/pop
 
 Needs manual acceptance: load `dist/` unpacked in chrome://extensions and confirm it loads without errors (not tested here, no browser).
 
+Review fixes: `npm run lint` now also runs `tsc --noEmit` (covers src, tests, scripts); popup/options HTML load bundles with `type="module"`; manifest merge lives in `scripts/manifest.mjs` (`buildManifest`) and is unit-tested.
+
 Note: `npm ci` warns that esbuild's postinstall is not approved; the build still works (verified), so no action taken.
 
 ## Plan overview

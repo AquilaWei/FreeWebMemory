@@ -5,8 +5,10 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
     "skipLibCheck": true,
-    "types": ["chrome"]
+    "types": ["chrome", "node"]
   },
   "include": ["src", "tests", "scripts"]
 }
