@@ -41,7 +41,10 @@ export function sanitizeSettings(raw: unknown): Settings {
     : d.idleMinutes;
 
   const whitelist = Array.isArray(input.whitelist)
-    ? input.whitelist.filter((h): h is string => typeof h === "string" && h.trim() !== "")
+    ? input.whitelist
+        .filter((h): h is string => typeof h === "string")
+        .map((h) => h.trim().toLowerCase()) // hostnames are lowercase, so F3 can match exactly
+        .filter((h) => h !== "")
     : [...d.whitelist];
 
   return {

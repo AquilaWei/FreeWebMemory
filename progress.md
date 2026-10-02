@@ -26,3 +26,4 @@ Note: `npm ci` warns that esbuild's postinstall is not approved; the build still
 - Keep logic in pure functions (policy, estimator) and mock the `chrome` API in tests. Real-browser behavior (tab actually discarded, popup looks right, zip loads) cannot be automated here: list it for manual acceptance, do not claim it was tested.
 - Version lives only in `package.json`; manifest gets it at build time. Commits: English one line `<type>: <description>`. Do not commit `CLAUDE.md`, `.claude/`, `dist/`, `node_modules/`.
 - Privacy: no network calls, no page content leaves the browser; request minimal permissions.
+- F2 review fixes: whitelist entries are trimmed and lowercased before storing (F3 can match hostnames exactly); CHANGELOG and README now mention the settings module and the `storage` permission.

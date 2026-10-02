@@ -79,6 +79,10 @@ describe("sanitizeSettings", () => {
     });
   });
 
+  it("trims and lowercases whitelist entries so they match hostnames", () => {
+    expect(sanitizeSettings({ whitelist: [" Example.COM "] }).whitelist).toEqual(["example.com"]);
+  });
+
   it("drops non-string and blank whitelist entries", () => {
     expect(sanitizeSettings({ whitelist: ["a.com", 5, "  ", null] }).whitelist).toEqual(["a.com"]);
   });

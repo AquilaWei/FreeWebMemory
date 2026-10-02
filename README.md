@@ -23,4 +23,4 @@ The build writes the extension to `dist/`.
 
 ## Privacy
 
-No network calls; nothing leaves the browser.
+No network calls; nothing leaves the browser. The only permission requested so far is `storage`, used to keep your settings in `chrome.storage.sync` (synced by Chrome across your devices).
