@@ -28,6 +28,13 @@ function wholeNumber(text: string, min: number, max: number): number | null {
   return value >= min && value <= max ? value : null;
 }
 
+export const IDLE_MINUTES_ERROR = `Idle minutes must be a whole number from ${MIN_IDLE_MINUTES} to ${MAX_IDLE_MINUTES}.`;
+
+/** Parses the idle-minutes text of a form field, or returns null when it is not a valid whole number in range. */
+export function parseIdleMinutes(text: string): number | null {
+  return wholeNumber(text, MIN_IDLE_MINUTES, MAX_IDLE_MINUTES);
+}
+
 /**
  * Checks the form and builds Settings from it. Unlike `sanitizeSettings`, which quietly
  * repairs stored data, this reports every problem so the user can fix what they typed;
@@ -37,10 +44,8 @@ function wholeNumber(text: string, min: number, max: number): number | null {
 export function validateForm(values: FormValues): FormResult {
   const errors: string[] = [];
 
-  const idleMinutes = wholeNumber(values.idleMinutes, MIN_IDLE_MINUTES, MAX_IDLE_MINUTES);
-  if (idleMinutes === null) {
-    errors.push(`Idle minutes must be a whole number from ${MIN_IDLE_MINUTES} to ${MAX_IDLE_MINUTES}.`);
-  }
+  const idleMinutes = parseIdleMinutes(values.idleMinutes);
+  if (idleMinutes === null) errors.push(IDLE_MINUTES_ERROR);
   const pressureThresholdPercent = wholeNumber(values.pressureThresholdPercent, 0, MAX_PRESSURE_PERCENT);
   if (pressureThresholdPercent === null) {
     errors.push(`Memory pressure threshold must be a whole number from 0 to ${MAX_PRESSURE_PERCENT}.`);

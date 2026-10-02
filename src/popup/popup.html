@@ -11,6 +11,7 @@
       dt { color: #555; }
       dd { margin: 0 0 6px; font-weight: 600; }
       button { display: block; width: 100%; margin: 6px 0; padding: 6px; }
+      input[type=number] { width: 5em; }
       #status { min-height: 1.2em; color: #555; }
     </style>
   </head>
@@ -18,6 +19,9 @@
     <main>
       <h1>Memory Saver</h1>
       <label><input type="checkbox" id="enabled" /> Discard idle tabs automatically</label>
+      <label>Discard after idle minutes (1-1440)
+        <input type="number" id="idle-minutes" min="1" max="1440" step="1" />
+      </label>
       <dl aria-label="Statistics">
         <dt>Tabs discarded</dt>
         <dd id="discarded-count">0</dd>
@@ -29,6 +33,7 @@
       <button type="button" id="discard-now">Discard other tabs now</button>
       <button type="button" id="never-discard">Never discard this site</button>
       <button type="button" id="reset-stats">Reset statistics</button>
+      <button type="button" id="open-options">More settings</button>
       <p id="status" role="status"></p>
     </main>
     <script type="module" src="popup.js"></script>

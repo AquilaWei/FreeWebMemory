@@ -9,6 +9,7 @@ let sync: Record<string, unknown>;
 let local: Record<string, unknown>;
 let activeTabs: Partial<chrome.tabs.Tab>[];
 let sendMessage: ReturnType<typeof vi.fn>;
+let openOptionsPage: ReturnType<typeof vi.fn>;
 
 function area(store: Record<string, unknown>) {
   return {
@@ -34,10 +35,11 @@ beforeEach(() => {
   local = {};
   activeTabs = [{ id: 1, url: "https://Docs.Example.com/page" }];
   sendMessage = vi.fn(async () => ({ discarded: 3 }));
+  openOptionsPage = vi.fn(async () => undefined);
   vi.stubGlobal("chrome", {
     storage: { sync: area(sync), local: area(local) },
     tabs: { query: async () => activeTabs },
-    runtime: { sendMessage },
+    runtime: { sendMessage, openOptionsPage },
     system: { memory: { getInfo: async () => ({ capacity: 8 * 1024 ** 3, availableCapacity: 2 * 1024 ** 3 }) } },
   });
 });
@@ -92,6 +94,36 @@ describe("initPopup", () => {
     toggle.checked = false;
     toggle.dispatchEvent(new Event("change"));
     await vi.waitFor(() => expect((sync.settings as { enabled: boolean }).enabled).toBe(false));
+  });
+
+  it("shows the stored idle minutes in the idle field", async () => {
+    sync.settings = { ...DEFAULT_SETTINGS, idleMinutes: 45 };
+    await initPopup(document);
+    expect((el("idle-minutes") as HTMLInputElement).value).toBe("45");
+  });
+
+  it("saves a valid idle minutes value when the field changes", async () => {
+    await initPopup(document);
+    const field = el("idle-minutes") as HTMLInputElement;
+    field.value = "15";
+    field.dispatchEvent(new Event("change"));
+    await vi.waitFor(() => expect((sync.settings as { idleMinutes: number }).idleMinutes).toBe(15));
+  });
+
+  it.each(["0", "abc", "1441", "2.5", ""])("saves nothing and shows an error for idle minutes %j", async (value) => {
+    await initPopup(document);
+    const field = el("idle-minutes") as HTMLInputElement;
+    field.value = value;
+    field.dispatchEvent(new Event("change"));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sync.settings).toBeUndefined();
+    expect(el("status").textContent).toContain("whole number from 1 to 1440");
+  });
+
+  it("opens the options page from the more settings button", async () => {
+    await initPopup(document);
+    await click("open-options");
+    expect(openOptionsPage).toHaveBeenCalledOnce();
   });
 
   it("sends a discard-now message and reports how many tabs were discarded", async () => {

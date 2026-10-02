@@ -1,6 +1,7 @@
 import type { DiscardNowMessage, DiscardNowResponse } from "../messages";
 import { loadSettings, saveSettings, whitelistSite } from "../settings";
 import { loadStats, resetStats } from "../stats";
+import { IDLE_MINUTES_ERROR, parseIdleMinutes } from "../options/validate";
 import { renderStats, type MemoryInfo } from "./render";
 
 function byId<T extends HTMLElement>(doc: Document, id: string): T {
@@ -36,7 +37,10 @@ export async function initPopup(doc: Document): Promise<void> {
   };
   const refresh = async () => renderStats(doc, await loadStats(), await readMemory());
 
-  enabled.checked = (await loadSettings()).enabled;
+  const idleMinutes = byId<HTMLInputElement>(doc, "idle-minutes");
+  const initial = await loadSettings();
+  enabled.checked = initial.enabled;
+  idleMinutes.value = String(initial.idleMinutes);
   await refresh();
 
   enabled.addEventListener(
@@ -45,6 +49,21 @@ export async function initPopup(doc: Document): Promise<void> {
       await saveSettings({ ...(await loadSettings()), enabled: enabled.checked });
       say(enabled.checked ? "Automatic discard is on." : "Automatic discard is off.");
     }),
+  );
+
+  idleMinutes.addEventListener(
+    "change",
+    guarded(async () => {
+      const minutes = parseIdleMinutes(idleMinutes.value);
+      if (minutes === null) return say(IDLE_MINUTES_ERROR);
+      await saveSettings({ ...(await loadSettings()), idleMinutes: minutes });
+      say(`Tabs are discarded after ${minutes} idle minute${minutes === 1 ? "" : "s"}.`);
+    }),
+  );
+
+  byId(doc, "open-options").addEventListener(
+    "click",
+    guarded(async () => chrome.runtime.openOptionsPage()),
   );
 
   byId(doc, "discard-now").addEventListener(

@@ -15,3 +15,4 @@
 - Memory-pressure mode: when available system memory drops below a configurable percentage (default 10%, 0 turns it off, at most 50%), the least recently used eligible tabs are discarded one at a time, regardless of idle time, until memory recovers (at most 10 per minute). All protections still apply.
 - Options page: edit every setting (including the memory-pressure threshold) and the site whitelist, with clear messages for invalid input (nothing is saved until it is fixed), plus export and import of settings as JSON.
 - Packaging: `npm run package` builds a reproducible zip plus SHA256 checksum, and a GitHub Actions workflow runs lint, tests, build and package on every push. Tests guard against new permissions, remote code and network calls. The README lists each permission with its reason and what still needs a real-browser check.
+- Popup: set how many idle minutes pass before a tab is discarded, and open the full options page with "More settings".
