@@ -46,7 +46,7 @@
         "Disabled setting means no discard is ever called",
         "Real-browser check (listed under 'needs manual acceptance'): an idle tab becomes discarded after the threshold"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F5",

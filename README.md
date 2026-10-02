@@ -23,4 +23,4 @@ The build writes the extension to `dist/`.
 
 ## Privacy
 
-No network calls; nothing leaves the browser. The only permission requested so far is `storage`, used to keep your settings in `chrome.storage.sync` (synced by Chrome across your devices).
+No network calls; nothing leaves the browser. Permissions: `storage` keeps your settings in `chrome.storage.sync` (synced by Chrome across your devices) and tab activity times in `chrome.storage.session` (memory only); `tabs` reads tab URLs and state so protected tabs are skipped and idle ones discarded; `alarms` wakes the background worker once a minute to check for idle tabs.

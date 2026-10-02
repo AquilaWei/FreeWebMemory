@@ -5,5 +5,5 @@
   "background": { "service_worker": "background.js", "type": "module" },
   "action": { "default_popup": "popup.html", "default_title": "Memory Saver" },
   "options_page": "options.html",
-  "permissions": ["storage"]
+  "permissions": ["storage", "tabs", "alarms"]
 }
