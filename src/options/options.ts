@@ -1,2 +1,3 @@
-// Options page entry; real form arrives in F9.
-export {};
+import { initOptions } from "./controller";
+
+void initOptions(document);

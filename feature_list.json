@@ -89,7 +89,7 @@
         "Unit test: protections (whitelist, pinned, audible, dirty, active) still hold under pressure",
         "Setting for pressure threshold is validated and exposed in options"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F9",
@@ -100,7 +100,7 @@
         "Unit test: exported JSON re-imports to identical settings; malformed JSON is rejected with a message",
         "Whitelist entries are normalized (hostnames, lowercase, no scheme/path)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F10",

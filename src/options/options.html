@@ -1,8 +1,50 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8" /><title>Memory Saver options</title></head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memory Saver options</title>
+    <style>
+      body { font: 14px system-ui, sans-serif; margin: 16px auto; max-width: 560px; }
+      fieldset { margin: 12px 0; }
+      label { display: block; margin: 6px 0; }
+      textarea { width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; }
+      #errors { color: #b00020; }
+    </style>
+  </head>
   <body>
-    <main id="app">Memory Saver options</main>
+    <main>
+      <h1>Memory Saver options</h1>
+      <ul id="errors" role="alert"></ul>
+      <p id="status" role="status"></p>
+
+      <form id="settings-form">
+        <label><input type="checkbox" id="enabled" /> Discard idle tabs automatically</label>
+        <label>Idle minutes before a tab is discarded (1-1440)
+          <input type="number" id="idle-minutes" min="1" max="1440" step="1" />
+        </label>
+        <label>Memory pressure threshold, % of memory still free (0 turns it off, max 50)
+          <input type="number" id="pressure-percent" min="0" max="50" step="1" />
+        </label>
+        <fieldset>
+          <legend>Never discard</legend>
+          <label><input type="checkbox" id="protect-pinned" /> Pinned tabs</label>
+          <label><input type="checkbox" id="protect-audible" /> Tabs playing sound</label>
+          <label><input type="checkbox" id="protect-form-dirty" /> Tabs with unsaved form input</label>
+        </fieldset>
+        <label>Sites that are never discarded (one per line, subdomains included)
+          <textarea id="whitelist" rows="6"></textarea>
+        </label>
+        <button type="submit">Save settings</button>
+      </form>
+
+      <h2>Export and import</h2>
+      <label>Settings as JSON
+        <textarea id="settings-json" rows="10"></textarea>
+      </label>
+      <button type="button" id="export">Export settings</button>
+      <button type="button" id="import">Import settings</button>
+    </main>
     <script type="module" src="options.js"></script>
   </body>
 </html>
