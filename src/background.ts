@@ -1,9 +1,22 @@
 import { isDirtyMessage } from "./content/messages";
+import { isDiscardNowMessage, type DiscardNowResponse } from "./messages";
+import { StatsRecorder } from "./stats";
 import { ActivityTracker, SWEEP_ALARM } from "./tracker";
 
 // Listeners must be registered synchronously at top level so Chrome can wake
 // the service worker for them. The tracker restores itself from storage.session.
 const tracker = new ActivityTracker();
+const stats = new StatsRecorder();
+
+/** Counts the discards in the cumulative stats; a failed write is logged, not thrown. */
+async function recordDiscards(tabIds: number[]): Promise<void> {
+  if (tabIds.length === 0) return;
+  try {
+    await stats.record(tabIds.length);
+  } catch (err) {
+    console.warn("Could not record discard stats", err);
+  }
+}
 
 /** Alarms survive worker restarts, so only create it when missing. */
 async function ensureAlarm(): Promise<void> {
@@ -29,11 +42,25 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === SWEEP_ALARM) void tracker.sweep();
+  if (alarm.name === SWEEP_ALARM) void tracker.sweep().then(recordDiscards);
 });
 
-chrome.runtime.onMessage.addListener((message, sender) => {
-  // Only our own content scripts, which always run inside a tab.
-  if (sender.id !== chrome.runtime.id || sender.tab?.id === undefined) return;
-  if (isDirtyMessage(message)) void tracker.setDirty(sender.tab.id, message.dirty);
+chrome.runtime.onMessage.addListener((message, sender, sendResponse: (response: DiscardNowResponse) => void) => {
+  if (sender.id !== chrome.runtime.id) return;
+  // The popup is an extension page, so unlike a content script it has no tab.
+  if (sender.tab === undefined && isDiscardNowMessage(message)) {
+    tracker
+      .discardNow()
+      .then(async (ids) => {
+        await recordDiscards(ids);
+        sendResponse({ discarded: ids.length });
+      })
+      .catch((err) => {
+        console.warn("Discard now failed", err);
+        sendResponse({ discarded: 0 });
+      });
+    return true; // keep the channel open for the async response
+  }
+  // Dirty reports come only from our content scripts, which always run inside a tab.
+  if (sender.tab?.id !== undefined && isDirtyMessage(message)) void tracker.setDirty(sender.tab.id, message.dirty);
 });

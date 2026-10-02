@@ -1,2 +1,3 @@
-// Popup UI entry; real controls arrive in F6.
-export {};
+import { initPopup } from "./controller";
+
+void initPopup(document);

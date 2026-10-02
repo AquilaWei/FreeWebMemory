@@ -221,3 +221,41 @@ describe("ActivityTracker robustness", () => {
     expect(result).toEqual([]);
   });
 });
+
+describe("ActivityTracker.discardNow", () => {
+  it("discards tabs that are not idle long enough for a sweep", async () => {
+    session.lastActive = { 1: NOW - 1 * MIN };
+    tabs = [tab(1)];
+
+    const result = await new ActivityTracker(() => NOW).discardNow();
+
+    expect(result).toEqual([1]);
+  });
+
+  it("skips active, pinned, audible, whitelisted and dirty tabs", async () => {
+    sync.settings = { ...DEFAULT_SETTINGS, whitelist: ["site5.example"] };
+    session.dirtyTabs = [6];
+    tabs = [tab(1, { active: true }), tab(2, { pinned: true }), tab(3, { audible: true }), tab(5), tab(6), tab(7)];
+
+    const result = await new ActivityTracker(() => NOW).discardNow();
+
+    expect(result).toEqual([7]);
+  });
+
+  it("discards even when automatic discarding is switched off", async () => {
+    sync.settings = { ...DEFAULT_SETTINGS, enabled: false };
+    tabs = [tab(1)];
+
+    const result = await new ActivityTracker(() => NOW).discardNow();
+
+    expect(result).toEqual([1]);
+  });
+
+  it("skips chrome:// pages", async () => {
+    tabs = [tab(1, { url: "chrome://extensions" })];
+
+    const result = await new ActivityTracker(() => NOW).discardNow();
+
+    expect(result).toEqual([]);
+  });
+});

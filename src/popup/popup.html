@@ -1,8 +1,36 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8" /><title>Memory Saver</title></head>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Memory Saver</title>
+    <style>
+      body { font: 14px system-ui, sans-serif; margin: 12px; min-width: 260px; }
+      h1 { font-size: 16px; margin: 0 0 8px; }
+      dl { margin: 8px 0; }
+      dt { color: #555; }
+      dd { margin: 0 0 6px; font-weight: 600; }
+      button { display: block; width: 100%; margin: 6px 0; padding: 6px; }
+      #status { min-height: 1.2em; color: #555; }
+    </style>
+  </head>
   <body>
-    <main id="app">Memory Saver</main>
+    <main>
+      <h1>Memory Saver</h1>
+      <label><input type="checkbox" id="enabled" /> Discard idle tabs automatically</label>
+      <dl aria-label="Statistics">
+        <dt>Tabs discarded</dt>
+        <dd id="discarded-count">0</dd>
+        <dt>Memory saved (estimate)</dt>
+        <dd id="saved-estimate">0 MB</dd>
+        <dt>System memory available</dt>
+        <dd id="system-memory">unknown</dd>
+      </dl>
+      <button type="button" id="discard-now">Discard other tabs now</button>
+      <button type="button" id="never-discard">Never discard this site</button>
+      <button type="button" id="reset-stats">Reset statistics</button>
+      <p id="status" role="status"></p>
+    </main>
     <script type="module" src="popup.js"></script>
   </body>
 </html>

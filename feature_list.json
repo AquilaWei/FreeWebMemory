@@ -67,7 +67,7 @@
         "Unit test: popup render function shows counts given a stats object",
         "Popup passes basic accessibility checks (labels on controls, keyboard operable) via a lint rule or test"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F7",

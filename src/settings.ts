@@ -25,6 +25,38 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
 const STORAGE_KEY = "settings";
 
 /**
+ * Reduces a user-typed site to a bare lowercase hostname ("https://Example.com/a?b" and
+ * "*.example.com" both become the hostname), or null when nothing usable is left.
+ * Subdomains are matched by the policy, so no wildcard is stored.
+ */
+export function normalizeWhitelistEntry(raw: string): string | null {
+  const text = raw.trim().toLowerCase().replace(/^\*\./, "");
+  if (text === "") return null;
+  try {
+    return new URL(text.includes("://") ? text : `http://${text}`).hostname || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Returns `settings` with the hostname of `url` added to the whitelist, or null when `url`
+ * is not an http(s) page (nothing to whitelist). Adding a site twice keeps one entry.
+ */
+export function whitelistSite(settings: Settings, url: string | undefined): Settings | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url ?? "");
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  const host = normalizeWhitelistEntry(parsed.hostname);
+  if (host === null) return null;
+  return { ...settings, whitelist: [...new Set([...settings.whitelist, host])] };
+}
+
+/**
  * Turns untrusted input (storage contents, imported JSON) into valid Settings.
  * Unknown keys are dropped, wrongly typed fields fall back to defaults, and
  * idleMinutes is rounded and clamped so a corrupt value can never disable the
@@ -43,14 +75,14 @@ export function sanitizeSettings(raw: unknown): Settings {
   const whitelist = Array.isArray(input.whitelist)
     ? input.whitelist
         .filter((h): h is string => typeof h === "string")
-        .map((h) => h.trim().toLowerCase()) // hostnames are lowercase, so F3 can match exactly
-        .filter((h) => h !== "")
+        .map(normalizeWhitelistEntry) // bare lowercase hostnames, so the policy can match exactly
+        .filter((h): h is string => h !== null)
     : [...d.whitelist];
 
   return {
     enabled: bool(input.enabled, d.enabled),
     idleMinutes,
-    whitelist,
+    whitelist: [...new Set(whitelist)],
     protectPinned: bool(input.protectPinned, d.protectPinned),
     protectAudible: bool(input.protectAudible, d.protectAudible),
     protectFormDirty: bool(input.protectFormDirty, d.protectFormDirty),

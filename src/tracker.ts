@@ -1,5 +1,5 @@
 import { decideDiscard } from "./policy";
-import { loadSettings } from "./settings";
+import { loadSettings, type Settings } from "./settings";
 
 const STORAGE_KEY = "lastActive";
 const DIRTY_KEY = "dirtyTabs";
@@ -80,11 +80,37 @@ export class ActivityTracker {
   }
 
   /**
+   * Ids of the tabs the policy approves right now, least recently used first.
+   * A tab with no recorded time counts as active now, so it sorts last.
+   */
+  private eligibleIds(tabs: chrome.tabs.Tab[], times: Map<number, number>, settings: Settings, now: number): number[] {
+    const eligible: { id: number; lastActive: number }[] = [];
+    for (const tab of tabs) {
+      if (tab.id === undefined) continue;
+      const lastActive = times.get(tab.id) ?? now;
+      const info = { ...tab, audible: tab.audible ?? false, dirty: this.dirty.has(tab.id) };
+      if (decideDiscard(info, lastActive, settings, now).discard) eligible.push({ id: tab.id, lastActive });
+    }
+    return eligible.sort((a, b) => a.lastActive - b.lastActive).map((t) => t.id);
+  }
+
+  /** Discards one tab; a failure (e.g. the tab just closed) is logged, not thrown. */
+  private async tryDiscard(tabId: number): Promise<boolean> {
+    try {
+      await chrome.tabs.discard(tabId);
+      return true;
+    } catch (err) {
+      console.warn(`Could not discard tab ${tabId}`, err);
+      return false;
+    }
+  }
+
+  /**
    * Discards every tab the policy approves, and returns the discarded tab ids.
    * Active tabs count as active now; tabs never seen before (opened while the
    * worker was not tracking) start their idle timer now rather than being
    * discarded immediately. Tabs that no longer exist are dropped.
-   * A failing discard (e.g. the tab just closed) is logged and does not stop the sweep.
+   * A failing discard is logged and does not stop the sweep.
    */
   async sweep(): Promise<number[]> {
     const [settings, tabs] = await Promise.all([loadSettings(), chrome.tabs.query({})]);
@@ -105,18 +131,24 @@ export class ActivityTracker {
 
     // Read after the update step so a touch that landed meanwhile is honoured.
     const current = await this.snapshot();
-    const dirty = new Set(this.dirty);
-    for (const tab of tabs) {
-      if (tab.id === undefined) continue;
-      const lastActive = current.get(tab.id);
-      if (lastActive === undefined) continue; // removed while sweeping
-      if (!decideDiscard({ ...tab, audible: tab.audible ?? false, dirty: dirty.has(tab.id) }, lastActive, settings, now).discard) continue;
-      try {
-        await chrome.tabs.discard(tab.id);
-        discarded.push(tab.id);
-      } catch (err) {
-        console.warn(`Could not discard tab ${tab.id}`, err);
-      }
+    for (const id of this.eligibleIds(tabs, current, settings, now)) {
+      if (await this.tryDiscard(id)) discarded.push(id);
+    }
+    return discarded;
+  }
+
+  /**
+   * Discards every eligible tab right away, ignoring the idle threshold and the
+   * "enabled" switch (the user asked explicitly), but still honouring every
+   * protection: active, pinned, audible, unsaved input, whitelist and non-http(s).
+   * Returns the discarded tab ids.
+   */
+  async discardNow(): Promise<number[]> {
+    const [settings, tabs] = await Promise.all([loadSettings(), chrome.tabs.query({})]);
+    const times = await this.snapshot();
+    const discarded: number[] = [];
+    for (const id of this.eligibleIds(tabs, times, { ...settings, enabled: true, idleMinutes: 0 }, this.now())) {
+      if (await this.tryDiscard(id)) discarded.push(id);
     }
     return discarded;
   }

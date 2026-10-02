@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_SETTINGS,
   loadSettings,
+  normalizeWhitelistEntry,
   onSettingsChanged,
   sanitizeSettings,
   saveSettings,
+  whitelistSite,
   type Settings,
 } from "../src/settings";
 
@@ -132,5 +134,39 @@ describe("onSettingsChanged", () => {
     onSettingsChanged(listener);
     changeListeners[0]({ other: { newValue: 1 } }, "sync");
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe("normalizeWhitelistEntry", () => {
+  it("reduces a url to its lowercase hostname", () => {
+    expect(normalizeWhitelistEntry("HTTPS://Docs.Example.com:8080/a/b?c=1#d")).toBe("docs.example.com");
+  });
+
+  it("drops a leading wildcard and a bare path", () => {
+    expect(normalizeWhitelistEntry("*.example.com")).toBe("example.com");
+    expect(normalizeWhitelistEntry("example.com/path")).toBe("example.com");
+  });
+
+  it("returns null for blank or unusable input", () => {
+    expect(normalizeWhitelistEntry("   ")).toBeNull();
+    expect(normalizeWhitelistEntry("not a host")).toBeNull();
+  });
+});
+
+describe("whitelistSite", () => {
+  it("adds the hostname of an https page once", () => {
+    const once = whitelistSite(DEFAULT_SETTINGS, "https://Example.com/x");
+    expect(whitelistSite(once!, "https://example.com/y")?.whitelist).toEqual(["example.com"]);
+  });
+
+  it("returns null for non-http pages and missing urls", () => {
+    expect(whitelistSite(DEFAULT_SETTINGS, "chrome://extensions")).toBeNull();
+    expect(whitelistSite(DEFAULT_SETTINGS, undefined)).toBeNull();
+  });
+});
+
+describe("sanitizeSettings whitelist normalization", () => {
+  it("stores bare hostnames without duplicates", () => {
+    expect(sanitizeSettings({ whitelist: ["https://A.com/x", "a.com", "*.b.com"] }).whitelist).toEqual(["a.com", "b.com"]);
   });
 });
