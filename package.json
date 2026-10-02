@@ -2,6 +2,7 @@
   "name": "memory-saver",
   "version": "0.1.0",
   "description": "Chrome extension that saves memory by discarding idle tabs",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "scripts": {

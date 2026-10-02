@@ -72,3 +72,7 @@ Automated tests use mocks, so these must be checked once in a real Chrome (load 
 ## Privacy
 
 No network calls; nothing leaves the browser. Permissions: `storage` keeps your settings in `chrome.storage.sync` (synced by Chrome across your devices) and tab activity times in `chrome.storage.session` (memory only); `tabs` reads tab URLs and state so protected tabs are skipped and idle ones discarded; `alarms` wakes the background worker once a minute to check for idle tabs; `system.memory` reads how much system memory is available (a number only). A content script runs on http(s) pages (no host permissions) and sends the background only a yes/no "form was edited" flag, so tabs with unsaved input are skipped; no page content is read or sent.
+
+## License
+
+[GPL-3.0](LICENSE). Copyright (C) 2026 AquilaWei.
