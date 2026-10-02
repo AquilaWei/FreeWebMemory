@@ -24,6 +24,8 @@ await build({
 
 await cp("src/popup/popup.html", "dist/popup.html");
 await cp("src/options/options.html", "dist/options.html");
+// Only the rendered PNGs ship; the SVG sources stay in the repo.
+await cp("src/icons", "dist/icons", { recursive: true, filter: (src) => !src.endsWith(".svg") });
 await writeFile(
   "dist/manifest.json",
   JSON.stringify(buildManifest(pkg, manifest), null, 2) + "\n",

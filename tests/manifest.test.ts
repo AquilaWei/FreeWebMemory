@@ -1,5 +1,5 @@
 import { buildManifest } from "../scripts/manifest.mjs";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 describe("source manifest", () => {
@@ -11,6 +11,19 @@ describe("source manifest", () => {
   it("is Manifest V3", () => {
     const manifest = JSON.parse(readFileSync("src/manifest.json", "utf8"));
     expect(manifest.manifest_version).toBe(3);
+  });
+});
+
+describe("icons", () => {
+  // The build copies src/icons/ to dist/icons/, so a manifest path icons/x maps to src/icons/x.
+  it("points every extension icon at a file that exists", () => {
+    const manifest = JSON.parse(readFileSync("src/manifest.json", "utf8"));
+    expect(Object.values(manifest.icons).filter((path) => !existsSync(`src/${path}`))).toEqual([]);
+  });
+
+  it("points every toolbar icon at a file that exists", () => {
+    const manifest = JSON.parse(readFileSync("src/manifest.json", "utf8"));
+    expect(Object.values(manifest.action.default_icon).filter((path) => !existsSync(`src/${path}`))).toEqual([]);
   });
 });
 

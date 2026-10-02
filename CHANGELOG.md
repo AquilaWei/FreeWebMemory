@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- The extension now has its own icon in the toolbar and on the extensions page.
 - Licensed under GPL-3.0 (added `LICENSE`).
 - Renamed the project to FreeWebMemory (extension name, package name and release zip name).
 

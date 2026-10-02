@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . && npm run typecheck",
     "test": "vitest run",
-    "package": "node scripts/package.mjs"
+    "package": "node scripts/package.mjs",
+    "icons": "node scripts/icons.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,4 +1,4 @@
-# FreeWebMemory
+# <img src="src/icons/icon-128.png" alt="" width="40" align="top"> FreeWebMemory
 
 A **Chrome (Manifest V3)** extension that saves memory by discarding idle tabs, while protecting the tabs you care about.
 
@@ -22,6 +22,8 @@ npm run build
 ```
 
 The build writes the extension to `dist/`.
+
+**Icons:** the PNG icons in `src/icons/` are committed. After editing `icon.svg` or `icon-small.svg` (the simplified drawing for 16 and 32 px), regenerate them with `npm run icons` (needs ImageMagick 7, `magick`).
 
 ## Package
 
