@@ -14,6 +14,16 @@ describe("source manifest", () => {
   });
 });
 
+describe("content script", () => {
+  it("runs only on http(s) pages and uses no extra host permissions", () => {
+    const manifest = JSON.parse(readFileSync("src/manifest.json", "utf8"));
+    expect(manifest.content_scripts).toEqual([
+      { matches: ["http://*/*", "https://*/*"], js: ["content.js"], run_at: "document_idle" },
+    ]);
+    expect(manifest.host_permissions).toBeUndefined();
+  });
+});
+
 describe("buildManifest", () => {
   const src = { manifest_version: 3, name: "Memory Saver", permissions: ["tabs"] };
 

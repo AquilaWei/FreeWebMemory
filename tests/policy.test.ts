@@ -37,6 +37,19 @@ describe("decideDiscard", () => {
     });
   });
 
+  it("refuses a dirty tab with reason 'dirty'", () => {
+    expect(decideDiscard({ ...tab, dirty: true }, 0, settings, NOW)).toEqual({
+      discard: false,
+      reason: "dirty",
+    });
+  });
+
+  it("approves a dirty tab when form protection is off", () => {
+    expect(decideDiscard({ ...tab, dirty: true }, 0, { ...settings, protectFormDirty: false }, NOW)).toEqual({
+      discard: true,
+    });
+  });
+
   it("refuses the active tab", () => {
     expect(decideDiscard({ ...tab, active: true }, 0, settings, NOW)).toEqual({
       discard: false,

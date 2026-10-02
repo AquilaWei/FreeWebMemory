@@ -1,3 +1,4 @@
+import { isDirtyMessage } from "./content/messages";
 import { ActivityTracker, SWEEP_ALARM } from "./tracker";
 
 // Listeners must be registered synchronously at top level so Chrome can wake
@@ -22,9 +23,17 @@ chrome.tabs.onRemoved.addListener((tabId) => void tracker.remove(tabId));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   // Discarding itself fires onUpdated; that must not restart the idle timer.
   if (changeInfo.discarded !== undefined) return;
+  // A new page load starts with clean forms; the content script only reports changes.
+  if (changeInfo.status === "loading") void tracker.setDirty(tabId, false);
   if (changeInfo.url !== undefined || changeInfo.status === "complete") void tracker.touch(tabId);
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === SWEEP_ALARM) void tracker.sweep();
+});
+
+chrome.runtime.onMessage.addListener((message, sender) => {
+  // Only our own content scripts, which always run inside a tab.
+  if (sender.id !== chrome.runtime.id || sender.tab?.id === undefined) return;
+  if (isDirtyMessage(message)) void tracker.setDirty(sender.tab.id, message.dirty);
 });

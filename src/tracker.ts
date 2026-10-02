@@ -2,6 +2,7 @@ import { decideDiscard } from "./policy";
 import { loadSettings } from "./settings";
 
 const STORAGE_KEY = "lastActive";
+const DIRTY_KEY = "dirtyTabs";
 export const SWEEP_ALARM = "discard-sweep";
 
 /**
@@ -12,6 +13,7 @@ export const SWEEP_ALARM = "discard-sweep";
  */
 export class ActivityTracker {
   private times = new Map<number, number>();
+  private dirty = new Set<number>();
   private queue: Promise<unknown>;
 
   constructor(private readonly now: () => number = Date.now) {
@@ -27,13 +29,19 @@ export class ActivityTracker {
     for (const [id, ms] of Object.entries(raw ?? {})) {
       if (typeof ms === "number" && Number.isFinite(ms)) this.times.set(Number(id), ms);
     }
+    const storedDirty = await chrome.storage.session.get(DIRTY_KEY);
+    const dirty = storedDirty[DIRTY_KEY] as number[] | undefined;
+    for (const id of dirty ?? []) if (typeof id === "number") this.dirty.add(id);
   }
 
   /** Runs `change` after all earlier work, then persists. Rejects if storage fails. */
   private mutate(change: () => void): Promise<void> {
     const run = this.queue.then(async () => {
       change();
-      await chrome.storage.session.set({ [STORAGE_KEY]: Object.fromEntries(this.times) });
+      await chrome.storage.session.set({
+        [STORAGE_KEY]: Object.fromEntries(this.times),
+        [DIRTY_KEY]: [...this.dirty],
+      });
     });
     this.queue = run.catch(() => undefined); // keep the chain alive after a failure
     return run;
@@ -46,7 +54,22 @@ export class ActivityTracker {
 
   /** Stops tracking a closed tab. */
   remove(tabId: number): Promise<void> {
-    return this.mutate(() => this.times.delete(tabId));
+    return this.mutate(() => {
+      this.times.delete(tabId);
+      this.dirty.delete(tabId);
+    });
+  }
+
+  /**
+   * Records whether the page in a tab has unsaved form input. The flag is
+   * cleared by the content script on submit/reset and by the background on a
+   * fresh page load, since a new page starts clean.
+   */
+  setDirty(tabId: number, dirty: boolean): Promise<void> {
+    return this.mutate(() => {
+      if (dirty) this.dirty.add(tabId);
+      else this.dirty.delete(tabId);
+    });
   }
 
   /** Last-active time per tab, after pending writes finish. */
@@ -76,15 +99,17 @@ export class ActivityTracker {
         if (tab.active || !known.has(tab.id)) this.times.set(tab.id, now);
       }
       for (const id of [...this.times.keys()]) if (!open.has(id)) this.times.delete(id);
+      for (const id of [...this.dirty]) if (!open.has(id)) this.dirty.delete(id);
     });
 
     // Read after the update step so a touch that landed meanwhile is honoured.
     const current = await this.snapshot();
+    const dirty = new Set(this.dirty);
     for (const tab of tabs) {
       if (tab.id === undefined) continue;
       const lastActive = current.get(tab.id);
       if (lastActive === undefined) continue; // removed while sweeping
-      if (!decideDiscard({ ...tab, audible: tab.audible ?? false }, lastActive, settings, now).discard) continue;
+      if (!decideDiscard({ ...tab, audible: tab.audible ?? false, dirty: dirty.has(tab.id) }, lastActive, settings, now).discard) continue;
       try {
         await chrome.tabs.discard(tab.id);
         discarded.push(tab.id);

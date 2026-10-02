@@ -7,6 +7,8 @@ export interface TabInfo {
   pinned: boolean;
   audible: boolean;
   discarded: boolean;
+  /** True when the page reported edited form fields (see content script). */
+  dirty?: boolean;
 }
 
 export type RefusalReason =
@@ -14,6 +16,7 @@ export type RefusalReason =
   | "active"
   | "pinned"
   | "audible"
+  | "dirty"
   | "discarded"
   | "unsupported_url"
   | "whitelisted"
@@ -47,6 +50,7 @@ export function decideDiscard(
   if (tab.discarded) return { discard: false, reason: "discarded" };
   if (tab.pinned && settings.protectPinned) return { discard: false, reason: "pinned" };
   if (tab.audible && settings.protectAudible) return { discard: false, reason: "audible" };
+  if (tab.dirty && settings.protectFormDirty) return { discard: false, reason: "dirty" };
 
   let url: URL;
   try {

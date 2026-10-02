@@ -63,7 +63,7 @@ beforeEach(() => {
       create: createAlarm,
       onAlarm: event("alarm"),
     },
-    runtime: { onInstalled: event("installed"), onStartup: event("startup") },
+    runtime: { id: "me", onInstalled: event("installed"), onStartup: event("startup"), onMessage: event("message") },
   });
 });
 
@@ -151,5 +151,31 @@ describe("background wiring", () => {
     await new Promise((r) => setTimeout(r, 20));
 
     expect(createAlarm).not.toHaveBeenCalled();
+  });
+
+  it("marks the sender tab dirty on a form-dirty message", async () => {
+    await loadBackground();
+
+    listeners.message({ type: "form-dirty", dirty: true }, { id: "me", tab: { id: 7 } });
+
+    await vi.waitFor(() => expect(session.dirtyTabs).toEqual([7]));
+  });
+
+  it("ignores a form-dirty message from another extension", async () => {
+    await loadBackground();
+
+    listeners.message({ type: "form-dirty", dirty: true }, { id: "other", tab: { id: 7 } });
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(session.dirtyTabs).toBeUndefined();
+  });
+
+  it("clears the dirty flag when the tab starts loading a new page", async () => {
+    session.dirtyTabs = [7];
+    await loadBackground();
+
+    listeners.updated(7, { status: "loading" });
+
+    await vi.waitFor(() => expect(session.dirtyTabs).toEqual([]));
   });
 });

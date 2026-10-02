@@ -137,6 +137,49 @@ describe("ActivityTracker tracking", () => {
   });
 });
 
+describe("ActivityTracker dirty tabs", () => {
+  it("does not discard an idle tab reported dirty", async () => {
+    session.lastActive = { 1: NOW - 60 * MIN, 2: NOW - 60 * MIN };
+    tabs = [tab(1), tab(2)];
+    const tracker = new ActivityTracker(() => NOW);
+    await tracker.setDirty(1, true);
+
+    await tracker.sweep();
+
+    expect(discard.mock.calls).toEqual([[2]]);
+  });
+
+  it("discards the tab again once it is reported clean", async () => {
+    session.lastActive = { 1: NOW - 60 * MIN };
+    tabs = [tab(1)];
+    const tracker = new ActivityTracker(() => NOW);
+    await tracker.setDirty(1, true);
+    await tracker.setDirty(1, false);
+
+    await tracker.sweep();
+
+    expect(discard).toHaveBeenCalledWith(1);
+  });
+
+  it("restores dirty flags after a worker restart", async () => {
+    session.lastActive = { 1: NOW - 60 * MIN };
+    session.dirtyTabs = [1];
+    tabs = [tab(1)];
+
+    await new ActivityTracker(() => NOW).sweep();
+
+    expect(discard).not.toHaveBeenCalled();
+  });
+
+  it("forgets the dirty flag of a removed tab", async () => {
+    const tracker = new ActivityTracker(() => NOW);
+    await tracker.setDirty(1, true);
+    await tracker.remove(1);
+
+    expect(session.dirtyTabs).toEqual([]);
+  });
+});
+
 describe("ActivityTracker robustness", () => {
   it("starts with an empty map when restoring from storage fails", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);

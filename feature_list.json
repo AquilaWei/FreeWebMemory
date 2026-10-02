@@ -56,7 +56,7 @@
         "Unit test: background policy treats a dirty tab as ineligible with reason code 'dirty'",
         "Content script requests no host permissions beyond what the manifest declares and sends no page content, only a boolean"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F6",

@@ -28,3 +28,12 @@ await writeFile(
   "dist/manifest.json",
   JSON.stringify(buildManifest(pkg, manifest), null, 2) + "\n",
 );
+
+// Content scripts cannot be ES modules, so bundle them as a classic script.
+await build({
+  entryPoints: { content: "src/content/content.ts" },
+  outdir: "dist",
+  bundle: true,
+  format: "iife",
+  target: "chrome120",
+});
