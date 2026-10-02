@@ -136,3 +136,45 @@ describe("ActivityTracker tracking", () => {
     expect(Object.keys(session.lastActive as object).sort()).toEqual(["1", "2", "3"]);
   });
 });
+
+describe("ActivityTracker robustness", () => {
+  it("starts with an empty map when restoring from storage fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    vi.stubGlobal("chrome", {
+      storage: {
+        sync: area(sync),
+        session: { get: async () => Promise.reject(new Error("boom")), set: async () => undefined },
+      },
+      tabs: { query: async () => tabs, discard },
+    });
+    const tracker = new ActivityTracker(() => NOW);
+
+    await expect(tracker.snapshot()).resolves.toEqual(new Map());
+  });
+
+  it("does not discard a tab touched while the sweep is running", async () => {
+    session.lastActive = { 1: NOW - 60 * MIN };
+    tabs = [tab(1)];
+    const tracker = new ActivityTracker(() => NOW);
+    let touched: Promise<void> | undefined;
+    // The touch is queued while the sweep's own write is in flight.
+    vi.stubGlobal("chrome", {
+      storage: {
+        sync: area(sync),
+        session: {
+          get: area(session).get,
+          set: async (items: Record<string, unknown>) => {
+            touched ??= tracker.touch(1);
+            Object.assign(session, items);
+          },
+        },
+      },
+      tabs: { query: async () => tabs, discard },
+    });
+
+    const result = await tracker.sweep();
+    await touched;
+
+    expect(result).toEqual([]);
+  });
+});

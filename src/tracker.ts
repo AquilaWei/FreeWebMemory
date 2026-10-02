@@ -15,7 +15,10 @@ export class ActivityTracker {
   private queue: Promise<unknown>;
 
   constructor(private readonly now: () => number = Date.now) {
-    this.queue = this.restore();
+    // A failed restore must not leave a rejected promise in the chain.
+    this.queue = this.restore().catch((err) => {
+      console.warn("Could not restore tab activity; starting with an empty map", err);
+    });
   }
 
   private async restore(): Promise<void> {
@@ -75,9 +78,12 @@ export class ActivityTracker {
       for (const id of [...this.times.keys()]) if (!open.has(id)) this.times.delete(id);
     });
 
+    // Read after the update step so a touch that landed meanwhile is honoured.
+    const current = await this.snapshot();
     for (const tab of tabs) {
       if (tab.id === undefined) continue;
-      const lastActive = tab.active || !known.has(tab.id) ? now : known.get(tab.id)!;
+      const lastActive = current.get(tab.id);
+      if (lastActive === undefined) continue; // removed while sweeping
       if (!decideDiscard({ ...tab, audible: tab.audible ?? false }, lastActive, settings, now).discard) continue;
       try {
         await chrome.tabs.discard(tab.id);
