@@ -112,7 +112,7 @@
         "A test checks that manifest.json declares no remote code, no host permissions beyond content-script needs, and no network calls exist in src/",
         "Real-browser smoke test of the built zip is listed under 'needs manual acceptance'"
       ],
-      "passes": false
+      "passes": true
     }
   ],
   "verify": "npm ci && npm run lint && npm test && npm run build",
