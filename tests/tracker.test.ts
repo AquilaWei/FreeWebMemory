@@ -9,6 +9,7 @@ let sync: Record<string, unknown>;
 let session: Record<string, unknown>;
 let tabs: Partial<chrome.tabs.Tab>[];
 let discard: ReturnType<typeof vi.fn>;
+let getMemoryInfo: ReturnType<typeof vi.fn>;
 
 function tab(id: number, extra: Partial<chrome.tabs.Tab> = {}): Partial<chrome.tabs.Tab> {
   return {
@@ -36,9 +37,11 @@ beforeEach(() => {
   session = {};
   tabs = [];
   discard = vi.fn(async () => ({}));
+  getMemoryInfo = vi.fn(async () => ({ capacity: 100, availableCapacity: 90 })); // plenty free
   vi.stubGlobal("chrome", {
     storage: { sync: area(sync), session: area(session) },
     tabs: { query: async () => tabs, discard },
+    system: { memory: { getInfo: getMemoryInfo } },
   });
 });
 
@@ -257,5 +260,101 @@ describe("ActivityTracker.discardNow", () => {
     const result = await new ActivityTracker(() => NOW).discardNow();
 
     expect(result).toEqual([]);
+  });
+});
+
+describe("ActivityTracker memory pressure", () => {
+  const noWait = async () => undefined;
+
+  /** Free memory per reading; the last value repeats. */
+  function freeMemory(...percents: number[]) {
+    let call = 0;
+    getMemoryInfo.mockImplementation(async () => ({ capacity: 100, availableCapacity: percents[Math.min(call++, percents.length - 1)] }));
+  }
+
+  it("discards least recently used tabs one at a time until memory is above the threshold", async () => {
+    freeMemory(5, 8, 20); // threshold 10: below, below, then eased
+    session.lastActive = { 1: NOW - 1 * MIN, 2: NOW - 3 * MIN, 3: NOW - 2 * MIN };
+    tabs = [tab(1), tab(2), tab(3)];
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toEqual([2, 3]);
+  });
+
+  it("discards nothing extra when memory is above the threshold", async () => {
+    freeMemory(50);
+    session.lastActive = { 1: NOW - 1 * MIN };
+    tabs = [tab(1)];
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toEqual([]);
+  });
+
+  it("keeps every protection under pressure", async () => {
+    freeMemory(1);
+    sync.settings = { ...DEFAULT_SETTINGS, whitelist: ["site5.example"] };
+    session.dirtyTabs = [6];
+    session.lastActive = { 1: NOW, 2: NOW, 3: NOW, 5: NOW, 6: NOW, 7: NOW };
+    tabs = [tab(1, { active: true }), tab(2, { pinned: true }), tab(3, { audible: true }), tab(5), tab(6), tab(7)];
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toEqual([7]);
+  });
+
+  it("does nothing when the threshold is 0", async () => {
+    freeMemory(1);
+    sync.settings = { ...DEFAULT_SETTINGS, pressureThresholdPercent: 0 };
+    session.lastActive = { 1: NOW };
+    tabs = [tab(1)];
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toEqual([]);
+    expect(getMemoryInfo).not.toHaveBeenCalled();
+  });
+
+  it("does nothing when automatic discarding is disabled", async () => {
+    freeMemory(1);
+    sync.settings = { ...DEFAULT_SETTINGS, enabled: false };
+    session.lastActive = { 1: NOW };
+    tabs = [tab(1)];
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toEqual([]);
+  });
+
+  it("does not discard the same tab twice when it was already idle", async () => {
+    freeMemory(1);
+    session.lastActive = { 1: NOW - 60 * MIN };
+    tabs = [tab(1)];
+
+    await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(discard).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops after 10 discards even if memory stays low", async () => {
+    freeMemory(1);
+    session.lastActive = Object.fromEntries(Array.from({ length: 15 }, (_, i) => [i + 1, NOW - i * MIN]));
+    tabs = Array.from({ length: 15 }, (_, i) => tab(i + 1));
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toHaveLength(10);
+  });
+
+  it("skips pressure mode and keeps the idle discards when the memory reading fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    getMemoryInfo.mockRejectedValue(new Error("no memory info"));
+    session.lastActive = { 1: NOW - 60 * MIN, 2: NOW };
+    tabs = [tab(1), tab(2)];
+
+    const result = await new ActivityTracker(() => NOW, noWait).sweep();
+
+    expect(result).toEqual([1]);
   });
 });

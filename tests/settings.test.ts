@@ -40,6 +40,7 @@ describe("loadSettings", () => {
       protectPinned: true,
       protectAudible: true,
       protectFormDirty: true,
+      pressureThresholdPercent: 10,
     });
   });
 
@@ -103,6 +104,7 @@ describe("saveSettings", () => {
       protectPinned: false,
       protectAudible: true,
       protectFormDirty: false,
+      pressureThresholdPercent: 25,
     };
     await saveSettings(custom);
     expect(await loadSettings()).toEqual(custom);
@@ -168,5 +170,20 @@ describe("whitelistSite", () => {
 describe("sanitizeSettings whitelist normalization", () => {
   it("stores bare hostnames without duplicates", () => {
     expect(sanitizeSettings({ whitelist: ["https://A.com/x", "a.com", "*.b.com"] }).whitelist).toEqual(["a.com", "b.com"]);
+  });
+});
+
+describe("sanitizeSettings pressure threshold", () => {
+  it("accepts 0 to turn pressure mode off", () => {
+    expect(sanitizeSettings({ pressureThresholdPercent: 0 }).pressureThresholdPercent).toBe(0);
+  });
+
+  it("clamps a value above 50 and a negative value", () => {
+    expect(sanitizeSettings({ pressureThresholdPercent: 90 }).pressureThresholdPercent).toBe(50);
+    expect(sanitizeSettings({ pressureThresholdPercent: -3 }).pressureThresholdPercent).toBe(0);
+  });
+
+  it("falls back to the default for a non-numeric value", () => {
+    expect(sanitizeSettings({ pressureThresholdPercent: "low" }).pressureThresholdPercent).toBe(10);
   });
 });

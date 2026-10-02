@@ -8,10 +8,16 @@ export interface Settings {
   protectPinned: boolean;
   protectAudible: boolean;
   protectFormDirty: boolean;
+  /**
+   * Memory-pressure mode: when available system memory falls below this percentage,
+   * least recently used eligible tabs are discarded regardless of idle time. 0 turns it off.
+   */
+  pressureThresholdPercent: number;
 }
 
 export const MIN_IDLE_MINUTES = 1;
 export const MAX_IDLE_MINUTES = 24 * 60;
+export const MAX_PRESSURE_PERCENT = 50;
 
 export const DEFAULT_SETTINGS: Readonly<Settings> = {
   enabled: true,
@@ -20,6 +26,7 @@ export const DEFAULT_SETTINGS: Readonly<Settings> = {
   protectPinned: true,
   protectAudible: true,
   protectFormDirty: true,
+  pressureThresholdPercent: 10,
 };
 
 const STORAGE_KEY = "settings";
@@ -60,7 +67,8 @@ export function whitelistSite(settings: Settings, url: string | undefined): Sett
  * Turns untrusted input (storage contents, imported JSON) into valid Settings.
  * Unknown keys are dropped, wrongly typed fields fall back to defaults, and
  * idleMinutes is rounded and clamped so a corrupt value can never disable the
- * idle threshold (e.g. 0 or negative) or make it effectively infinite.
+ * idle threshold (e.g. 0 or negative) or make it effectively infinite. The pressure
+ * threshold is clamped to 0-50 (above 50 would discard tabs on a half-empty machine).
  */
 export function sanitizeSettings(raw: unknown): Settings {
   const input = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : {};
@@ -79,6 +87,11 @@ export function sanitizeSettings(raw: unknown): Settings {
         .filter((h): h is string => h !== null)
     : [...d.whitelist];
 
+  const pressure = typeof input.pressureThresholdPercent === "number" ? input.pressureThresholdPercent : Number.NaN;
+  const pressureThresholdPercent = Number.isFinite(pressure)
+    ? Math.min(MAX_PRESSURE_PERCENT, Math.max(0, Math.round(pressure)))
+    : d.pressureThresholdPercent;
+
   return {
     enabled: bool(input.enabled, d.enabled),
     idleMinutes,
@@ -86,6 +99,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     protectPinned: bool(input.protectPinned, d.protectPinned),
     protectAudible: bool(input.protectAudible, d.protectAudible),
     protectFormDirty: bool(input.protectFormDirty, d.protectFormDirty),
+    pressureThresholdPercent,
   };
 }
 

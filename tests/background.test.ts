@@ -71,6 +71,7 @@ beforeEach(() => {
       create: createAlarm,
       onAlarm: event("alarm"),
     },
+    system: { memory: { getInfo: async () => ({ capacity: 100, availableCapacity: 90 }) } },
     runtime: { id: "me", onInstalled: event("installed"), onStartup: event("startup"), onMessage: event("message") },
   });
 });

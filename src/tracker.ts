@@ -1,9 +1,14 @@
 import { decideDiscard } from "./policy";
+import { isUnderPressure } from "./memory";
 import { loadSettings, type Settings } from "./settings";
 
 const STORAGE_KEY = "lastActive";
 const DIRTY_KEY = "dirtyTabs";
 export const SWEEP_ALARM = "discard-sweep";
+/** Chrome frees a discarded tab's memory a moment later, so wait before measuring again. */
+const PRESSURE_SETTLE_MS = 1000;
+/** Upper bound per sweep, so a stuck reading cannot discard every tab at once. */
+const MAX_PRESSURE_DISCARDS = 10;
 
 /**
  * Remembers when each tab was last active. MV3 service workers are killed
@@ -16,7 +21,10 @@ export class ActivityTracker {
   private dirty = new Set<number>();
   private queue: Promise<unknown>;
 
-  constructor(private readonly now: () => number = Date.now) {
+  constructor(
+    private readonly now: () => number = Date.now,
+    private readonly sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  ) {
     // A failed restore must not leave a rejected promise in the chain.
     this.queue = this.restore().catch((err) => {
       console.warn("Could not restore tab activity; starting with an empty map", err);
@@ -133,6 +141,42 @@ export class ActivityTracker {
     const current = await this.snapshot();
     for (const id of this.eligibleIds(tabs, current, settings, now)) {
       if (await this.tryDiscard(id)) discarded.push(id);
+    }
+    discarded.push(...(await this.relievePressure(tabs, current, settings, now, discarded)));
+    return discarded;
+  }
+
+  /**
+   * Memory-pressure mode: while available memory is below the configured percentage,
+   * discards the least recently used eligible tab, one at a time, ignoring the idle
+   * threshold but not the protections. Stops when pressure eases, when no eligible tab
+   * is left, or after MAX_PRESSURE_DISCARDS. A failed memory reading is logged and ends
+   * pressure handling for this sweep.
+   */
+  private async relievePressure(
+    tabs: chrome.tabs.Tab[],
+    times: Map<number, number>,
+    settings: Settings,
+    now: number,
+    alreadyDiscarded: number[],
+  ): Promise<number[]> {
+    const discarded: number[] = [];
+    if (!settings.enabled || settings.pressureThresholdPercent <= 0) return discarded;
+    const candidates = this.eligibleIds(
+      tabs.filter((tab) => tab.id === undefined || !alreadyDiscarded.includes(tab.id)),
+      times,
+      { ...settings, idleMinutes: 0 },
+      now,
+    );
+    try {
+      for (const id of candidates.slice(0, MAX_PRESSURE_DISCARDS)) {
+        if (!(await isUnderPressure(settings.pressureThresholdPercent))) break;
+        if (!(await this.tryDiscard(id))) continue;
+        discarded.push(id);
+        await this.sleep(PRESSURE_SETTLE_MS);
+      }
+    } catch (err) {
+      console.warn("Could not read system memory; skipping pressure mode", err);
     }
     return discarded;
   }
