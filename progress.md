@@ -4,7 +4,7 @@
 A Chrome (Manifest V3) extension that saves memory, mainly by discarding idle tabs (`chrome.tabs.discard`) while protecting tabs the user cares about.
 
 ## State
-F1 done (scaffold: esbuild build to `dist/`, eslint, vitest, stub background/popup/options, version injected from `package.json` into manifest at build time). F2–F10 not started; see `feature_list.json` (build in order).
+F1 done (scaffold: esbuild build to `dist/`, eslint, vitest, stub background/popup/options, version injected from `package.json` into manifest at build time). F2 done (`src/settings.ts`: typed `Settings`, defaults, `sanitizeSettings` clamps idle minutes to 1–1440, `loadSettings`/`saveSettings`/`onSettingsChanged` over `chrome.storage.sync`; manifest now declares `storage`; tests mock `chrome` via `vi.stubGlobal`). F3–F10 not started; see `feature_list.json` (build in order).
 
 Needs manual acceptance: load `dist/` unpacked in chrome://extensions and confirm it loads without errors (not tested here, no browser).
 

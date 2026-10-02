@@ -21,7 +21,7 @@
         "Unit test: saved settings round-trip through a mocked chrome.storage",
         "Unit test: changes in storage fire the change listener with the new settings"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F3",
