@@ -1,0 +1,141 @@
+{
+  "features": [
+    {
+      "id": "F1",
+      "description": "Project scaffold: Manifest V3 extension with TypeScript, esbuild build, eslint, vitest and a minimal service worker, plus README, CHANGELOG, .gitignore and version 0.1.0 in package.json only.",
+      "steps": [
+        "`npm run build` produces dist/ containing manifest.json, background service worker, popup and options pages",
+        "manifest.json is generated/copied from package.json version (version written in one place only)",
+        "`npm run lint` and `npm test` run without prompts and pass (at least one trivial passing test)",
+        "node_modules/ and dist/ are git-ignored; package-lock.json is committed",
+        "README explains what it does, how to build, and how to load dist/ via chrome://extensions (unpacked)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F2",
+      "description": "Settings module: typed settings (enabled, idle minutes before discard, whitelist domains, protect pinned/audible/form-dirty tabs) stored in chrome.storage.sync with defaults and validation.",
+      "steps": [
+        "Unit test: loading with empty storage returns documented defaults",
+        "Unit test: invalid values (negative or non-numeric idle minutes) are rejected or clamped to the allowed range",
+        "Unit test: saved settings round-trip through a mocked chrome.storage",
+        "Unit test: changes in storage fire the change listener with the new settings"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F3",
+      "description": "Discard policy (pure function): given tab info, last-active time, settings and now, decide whether a tab should be discarded and why not otherwise.",
+      "steps": [
+        "Unit test: tab inactive longer than the idle threshold is eligible",
+        "Unit test: active tab, pinned tab, audible tab, already-discarded tab and chrome:// / extension pages are never eligible",
+        "Unit test: whitelisted domain (including subdomain match) is never eligible",
+        "Unit test: tab exactly at the threshold boundary has a fixed, tested outcome",
+        "Policy returns a reason code for every refusal"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F4",
+      "description": "Background auto-discard: track tab last-active times (onActivated, onUpdated, onRemoved) and periodically (chrome.alarms) call chrome.tabs.discard on eligible tabs, surviving service worker restarts by persisting timestamps in chrome.storage.session.",
+      "steps": [
+        "Unit test with mocked chrome API: after the alarm fires, only tabs the policy approves get discard called",
+        "Unit test: activating a tab resets its idle timer",
+        "Unit test: timestamps are restored from storage.session after a simulated worker restart",
+        "Unit test: removed tabs are dropped from tracking",
+        "Disabled setting means no discard is ever called",
+        "Real-browser check (listed under 'needs manual acceptance'): an idle tab becomes discarded after the threshold"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F5",
+      "description": "Protect tabs with unsaved input: a content script reports when a page has edited form fields, and those tabs are excluded from discard.",
+      "steps": [
+        "Unit test (jsdom): typing into an input/textarea marks the page dirty and sends a message; reset/submit clears it",
+        "Unit test: background policy treats a dirty tab as ineligible with reason code 'dirty'",
+        "Content script requests no host permissions beyond what the manifest declares and sends no page content, only a boolean"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F6",
+      "description": "Popup UI: show enabled toggle, count of discarded tabs, estimated memory saved, a 'discard other tabs now' button and 'never discard this site' button.",
+      "steps": [
+        "Unit test: 'discard now' sends the right message and background discards all eligible non-active tabs ignoring the idle threshold but still honoring protections",
+        "Unit test: 'never discard this site' adds the current tab's hostname to the whitelist",
+        "Unit test: popup render function shows counts given a stats object",
+        "Popup passes basic accessibility checks (labels on controls, keyboard operable) via a lint rule or test"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F7",
+      "description": "Memory savings estimate: record per-discard estimated bytes (heuristic documented in code, since per-tab memory is not available on stable Chrome) and cumulative stats; show system memory via chrome.system.memory.",
+      "steps": [
+        "Unit test: estimator returns the documented value for known inputs and never negative",
+        "Unit test: cumulative stats persist and can be reset",
+        "Estimate is labeled as an estimate in the UI",
+        "README documents the heuristic and its limits"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F8",
+      "description": "Memory-pressure mode: when available system memory drops below a configurable percentage, discard the least recently used eligible tabs regardless of the idle threshold until pressure eases.",
+      "steps": [
+        "Unit test: below threshold, LRU-ordered eligible tabs are discarded one at a time until the mocked free memory is above threshold",
+        "Unit test: above threshold, no extra discards occur",
+        "Unit test: protections (whitelist, pinned, audible, dirty, active) still hold under pressure",
+        "Setting for pressure threshold is validated and exposed in options"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F9",
+      "description": "Options page: edit all settings and whitelist, with validation messages and import/export of settings as JSON.",
+      "steps": [
+        "Unit test: submitting valid form saves via the settings module",
+        "Unit test: invalid input shows an error and does not save",
+        "Unit test: exported JSON re-imports to identical settings; malformed JSON is rejected with a message",
+        "Whitelist entries are normalized (hostnames, lowercase, no scheme/path)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "F10",
+      "description": "Packaging and release: zip build script, CI workflow (lint, test, build, zip, SHA256), privacy statement (no data leaves the browser), permission minimization review, CHANGELOG entry.",
+      "steps": [
+        "`npm run package` creates a versioned zip of dist/ and a SHA256 file",
+        "CI workflow runs lint, test, build and package on push",
+        "manifest permissions list contains only those actually used (tabs, storage, alarms, system.memory as applicable) with justification in README",
+        "A test checks that manifest.json declares no remote code, no host permissions beyond content-script needs, and no network calls exist in src/",
+        "Real-browser smoke test of the built zip is listed under 'needs manual acceptance'"
+      ],
+      "passes": false
+    }
+  ],
+  "verify": "npm ci && npm run lint && npm test && npm run build",
+  "questions": [
+    {
+      "question": "Which browsers should be supported?",
+      "options": ["Chrome only (MV3)", "Chrome + Edge (same MV3 build)", "Chrome + Firefox"]
+    },
+    {
+      "question": "Which language and toolchain should be used?",
+      "options": ["TypeScript + esbuild + vitest", "Plain JavaScript, no build step", "TypeScript + Vite (CRXJS)"]
+    },
+    {
+      "question": "Should discarding be the only memory-saving technique?",
+      "options": ["Yes, tab discarding only", "Also add auto-suspend of heavy background media/iframes", "Also add duplicate-tab detection and closing"]
+    },
+    {
+      "question": "Default idle time before a tab is discarded?",
+      "options": ["30 minutes", "10 minutes", "60 minutes"]
+    },
+    {
+      "question": "Will this be published to the Chrome Web Store?",
+      "options": ["No, personal unpacked use for now", "Yes, prepare store listing assets too"]
+    }
+  ]
+}
