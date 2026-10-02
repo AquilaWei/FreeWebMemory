@@ -130,6 +130,18 @@ describe("trackDirty", () => {
     expect(report).not.toHaveBeenCalled();
   });
 
+  it("reports dirty then clean for an input inside a shadow root", () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const inner = document.createElement("input");
+    host.attachShadow({ mode: "open" }).append(inner);
+    inner.value = "typed";
+    inner.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+    inner.value = "";
+    hide();
+    expect(report.mock.calls).toEqual([[true], [false]]);
+  });
+
   it("ignores input events from non-form elements", () => {
     input("b");
     expect(report).not.toHaveBeenCalled();

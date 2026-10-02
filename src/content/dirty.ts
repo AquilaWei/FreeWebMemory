@@ -51,7 +51,8 @@ export function trackDirty(doc: Document, win: Window, report: (dirty: boolean) 
   doc.addEventListener(
     "input",
     (event) => {
-      const target = event.target;
+      // Inside a shadow tree event.target is retargeted to the host; the real field is first in the path.
+      const target = event.composedPath()[0];
       if (!(target instanceof HTMLElement)) return;
       if (!target.matches("input, textarea, select") && !target.isContentEditable) return;
       edited.add(target);
