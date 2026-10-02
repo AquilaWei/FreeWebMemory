@@ -29,3 +29,4 @@ Note: `npm ci` warns that esbuild's postinstall is not approved; the build still
 - Version lives only in `package.json`; manifest gets it at build time. Commits: English one line `<type>: <description>`. Do not commit `CLAUDE.md`, `.claude/`, `dist/`, `node_modules/`.
 - Privacy: no network calls, no page content leaves the browser; request minimal permissions.
 - F2 review fixes: whitelist entries are trimmed and lowercased before storing (F3 can match hostnames exactly); CHANGELOG and README now mention the settings module and the `storage` permission.
+- F4 review fixes: `ensureAlarm()` also runs on every worker start (alarms may be cleared, re-enabling fires no event); `tests/background.test.ts` exercises the real listeners (alarm, activated, updated, removed, alarm creation); tracker catches a failed restore and `sweep` reads last-active times after its update step.

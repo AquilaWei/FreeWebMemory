@@ -11,6 +11,9 @@ async function ensureAlarm(): Promise<void> {
   }
 }
 
+// Alarms may be cleared on browser restart, and re-enabling the extension fires
+// neither event below, so check on every worker start too.
+void ensureAlarm();
 chrome.runtime.onInstalled.addListener(() => void ensureAlarm());
 chrome.runtime.onStartup.addListener(() => void ensureAlarm());
 
