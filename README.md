@@ -2,7 +2,7 @@
 
 A **Chrome (Manifest V3)** extension that saves memory by discarding idle tabs, while protecting the tabs you care about.
 
-> Status: all planned features are implemented (v0.1.0, not yet accepted on a real browser, see **Needs manual acceptance**).
+> Status: **v0.2.0**, all planned features implemented and accepted in a real Chrome.
 
 **What it does**
 
@@ -65,7 +65,7 @@ No host permissions. The content script runs on http(s) pages only to report a y
 
 ## Needs manual acceptance
 
-Automated tests use mocks, so these must be checked once in a real Chrome (load `dist/` unpacked or the zip's contents):
+Automated tests use mocks, so check these in a real Chrome before every release (load `dist/` unpacked or the zip's contents). Last accepted: v0.2.0.
 
 - The popup and options pages look right and every button works.
 - An idle tab is really discarded after the idle time (try 1 minute) and reloads when clicked.

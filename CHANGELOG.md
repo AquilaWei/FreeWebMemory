@@ -1,12 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-10-02
+
+First version accepted in a real Chrome.
 
 - The extension now has its own icon in the toolbar and on the extensions page.
 - Redesigned popup and options page: cards, a toggle switch, a system-memory bar, and automatic light/dark mode.
 - Licensed under GPL-3.0 (added `LICENSE`).
 - Renamed the project to FreeWebMemory (extension name, package name and release zip name).
-
 - Project scaffold: Manifest V3 build, lint and test tooling.
 - Settings stored in `chrome.storage.sync` with defaults and validation; whitelist entries are trimmed and lowercased. The extension now requests the `storage` permission.
 - Discard policy: decides per tab whether it may be discarded, with a reason for every refusal (not yet wired to the browser).
