@@ -4,7 +4,11 @@
 A Chrome (Manifest V3) extension that saves memory, mainly by discarding idle tabs (`chrome.tabs.discard`) while protecting tabs the user cares about.
 
 ## State
-Repository was empty (only an init commit). Planning only; no features implemented. See `feature_list.json` (F1–F10, build in order).
+F1 done (scaffold: esbuild build to `dist/`, eslint, vitest, stub background/popup/options, version injected from `package.json` into manifest at build time). F2–F10 not started; see `feature_list.json` (build in order).
+
+Needs manual acceptance: load `dist/` unpacked in chrome://extensions and confirm it loads without errors (not tested here, no browser).
+
+Note: `npm ci` warns that esbuild's postinstall is not approved; the build still works (verified), so no action taken.
 
 ## Plan overview
 1. F1 scaffold → F2 settings → F3 pure discard policy → F4 background auto-discard → F5 dirty-form protection

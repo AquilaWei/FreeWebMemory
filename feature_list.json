@@ -10,7 +10,7 @@
         "node_modules/ and dist/ are git-ignored; package-lock.json is committed",
         "README explains what it does, how to build, and how to load dist/ via chrome://extensions (unpacked)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "F2",
