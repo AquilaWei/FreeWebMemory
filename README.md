@@ -1,4 +1,4 @@
-# Memory Saver
+# FreeWebMemory
 
 A **Chrome (Manifest V3)** extension that saves memory by discarding idle tabs, while protecting the tabs you care about.
 
@@ -30,7 +30,7 @@ npm run build
 npm run package
 ```
 
-This writes `release/memory-saver-<version>.zip` and a `.sha256` file (check it with `cd release && sha256sum -c *.sha256`). The zip is reproducible: the same `dist/` always gives the same checksum. CI (`.github/workflows/ci.yml`) runs lint, test, build and package on every push and uploads the zip as an artifact.
+This writes `release/freewebmemory-<version>.zip` and a `.sha256` file (check it with `cd release && sha256sum -c *.sha256`). The zip is reproducible: the same `dist/` always gives the same checksum. CI (`.github/workflows/ci.yml`) runs lint, test, build and package on every push and uploads the zip as an artifact.
 
 ## Load in Chrome (unpacked)
 

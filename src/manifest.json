@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Memory Saver",
+  "name": "FreeWebMemory",
   "description": "Saves memory by discarding idle tabs.",
   "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "Memory Saver" },
+  "action": { "default_popup": "popup.html", "default_title": "FreeWebMemory" },
   "options_page": "options.html",
   "content_scripts": [
     {

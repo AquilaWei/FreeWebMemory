@@ -7,8 +7,8 @@ trackDirty(document, window, (dirty) => {
   // throws synchronously ("Extension context invalidated"); a lost report only
   // means the tab is treated as clean, so never let it reach the page.
   try {
-    chrome.runtime.sendMessage(message).catch((err) => console.warn("Memory Saver: report failed", err));
+    chrome.runtime.sendMessage(message).catch((err) => console.warn("FreeWebMemory: report failed", err));
   } catch (err) {
-    console.warn("Memory Saver: report failed", err);
+    console.warn("FreeWebMemory: report failed", err);
   }
 });

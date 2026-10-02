@@ -25,7 +25,7 @@ describe("content script", () => {
 });
 
 describe("buildManifest", () => {
-  const src = { manifest_version: 3, name: "Memory Saver", permissions: ["tabs"] };
+  const src = { manifest_version: 3, name: "FreeWebMemory", permissions: ["tabs"] };
 
   it("sets version to the package.json version", () => {
     expect(buildManifest({ version: "1.2.3" }, src).version).toBe("1.2.3");

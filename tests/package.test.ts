@@ -20,8 +20,8 @@ beforeEach(() => {
 
 describe("createPackage", () => {
   it("names the zip after the package and its version", async () => {
-    const { zipPath } = await createPackage(dist, join(root, "release"), "memory-saver", "1.2.3");
-    expect(zipPath).toBe(join(root, "release", "memory-saver-1.2.3.zip"));
+    const { zipPath } = await createPackage(dist, join(root, "release"), "freewebmemory", "1.2.3");
+    expect(zipPath).toBe(join(root, "release", "freewebmemory-1.2.3.zip"));
   });
 
   it("puts every dist file in the zip with manifest.json at the top level", async () => {
