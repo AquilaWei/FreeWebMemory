@@ -62,8 +62,9 @@ export class ActivityTracker {
 
   /**
    * Records whether the page in a tab has unsaved form input. The flag is
-   * cleared by the content script on submit/reset and by the background on a
-   * fresh page load, since a new page starts clean.
+   * owned by the content script, which reports false for each new document and
+   * whenever the edited fields are clean again; the background never clears it
+   * on its own.
    */
   setDirty(tabId: number, dirty: boolean): Promise<void> {
     return this.mutate(() => {

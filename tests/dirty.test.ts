@@ -12,8 +12,14 @@ beforeEach(() => {
   report.mockClear(); // the initial clean report is covered by its own test
 });
 
-function type(id: string) {
+function input(id: string) {
   document.getElementById(id)!.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+/** Types text into an input or textarea, as a user would. */
+function type(id: string) {
+  setValue(id, "typed");
+  input(id);
 }
 
 function pageshow(persisted: boolean) {
@@ -22,7 +28,43 @@ function pageshow(persisted: boolean) {
   window.dispatchEvent(event);
 }
 
+function hide() {
+  Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true });
+  document.dispatchEvent(new Event("visibilitychange"));
+}
+
+function setValue(id: string, value: string) {
+  (document.getElementById(id) as HTMLInputElement).value = value;
+}
+
 describe("trackDirty", () => {
+  it("reports clean when the app clears a typed field in code and the page is hidden", () => {
+    type("name");
+    setValue("name", "");
+    hide();
+    expect(report.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("reports clean when the edited element is removed and the page is hidden", () => {
+    type("name");
+    document.getElementById("name")!.remove();
+    hide();
+    expect(report.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("stays dirty when the typed value is left in place and the page is hidden", () => {
+    type("name");
+    hide();
+    expect(report.mock.calls).toEqual([[true]]);
+  });
+
+  it("reports clean when a field is edited back to its original value", () => {
+    type("name");
+    setValue("name", "");
+    input("name");
+    expect(report.mock.calls).toEqual([[true], [false]]);
+  });
+
   it("reports clean once when it starts", () => {
     const first = vi.fn<(dirty: boolean) => void>();
     trackDirty(document, window, first);
@@ -34,8 +76,9 @@ describe("trackDirty", () => {
     editor.id = "editor";
     // jsdom does not implement isContentEditable, so define what a browser reports.
     Object.defineProperty(editor, "isContentEditable", { value: true });
+    editor.textContent = "hello";
     document.body.append(editor);
-    type("editor");
+    input("editor");
     expect(report.mock.calls).toEqual([[true]]);
   });
 
@@ -88,7 +131,7 @@ describe("trackDirty", () => {
   });
 
   it("ignores input events from non-form elements", () => {
-    type("b");
+    input("b");
     expect(report).not.toHaveBeenCalled();
   });
 });
