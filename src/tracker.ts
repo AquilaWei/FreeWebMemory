@@ -1,4 +1,4 @@
-import { decideDiscard } from "./policy";
+import { decideDiscard, decideManualDiscard } from "./policy";
 import { isUnderPressure } from "./memory";
 import { loadSettings, type Settings } from "./settings";
 
@@ -195,5 +195,22 @@ export class ActivityTracker {
       if (await this.tryDiscard(id)) discarded.push(id);
     }
     return discarded;
+  }
+
+  /**
+   * Discards one tab the user picked, ignoring the idle threshold and the protections
+   * the user may override (see `decideManualDiscard`). Returns false when the tab is
+   * not discardable or no longer exists; a failing `chrome.tabs.get` is treated the same.
+   */
+  async freezeTab(tabId: number): Promise<boolean> {
+    let tab: chrome.tabs.Tab;
+    try {
+      tab = await chrome.tabs.get(tabId);
+    } catch (err) {
+      console.warn(`Could not read tab ${tabId}`, err);
+      return false;
+    }
+    if (!decideManualDiscard(tab).discard) return false;
+    return this.tryDiscard(tabId);
   }
 }

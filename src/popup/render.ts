@@ -1,3 +1,4 @@
+import { decideManualDiscard } from "../policy";
 import type { Stats } from "../stats";
 
 /** Memory figures from `chrome.system.memory.getInfo()`. */
@@ -32,5 +33,38 @@ export function renderStats(doc: Document, stats: Stats, memory?: MemoryInfo): v
     doc,
     "system-memory",
     memory ? `${formatBytes(memory.availableCapacity)} of ${formatBytes(memory.capacity)}` : "unknown",
+  );
+}
+
+const FROZEN_LABELS = { active: "In use", discarded: "Frozen", unsupported_url: "Not supported" } as const;
+
+/**
+ * Fills #tab-list with one row per tab and a Freeze button; rows the user cannot freeze
+ * (active, already frozen, not an http(s) page) get a disabled button saying why.
+ * `onFreeze` runs with the tab id when a Freeze button is clicked.
+ */
+export function renderTabs(doc: Document, tabs: chrome.tabs.Tab[], onFreeze: (tabId: number) => void): void {
+  const list = doc.getElementById("tab-list");
+  if (!list) return;
+  list.replaceChildren(
+    ...tabs.flatMap((tab) => {
+      if (tab.id === undefined) return [];
+      const tabId = tab.id;
+      const name = tab.title || tab.url || "Untitled tab";
+      const decision = decideManualDiscard({ url: tab.url, active: tab.active, discarded: tab.discarded });
+
+      const title = doc.createElement("span");
+      title.className = "tab-title";
+      title.textContent = name;
+      const button = doc.createElement("button");
+      button.type = "button";
+      button.textContent = decision.discard ? "Freeze" : FROZEN_LABELS[decision.reason as keyof typeof FROZEN_LABELS];
+      button.disabled = !decision.discard;
+      button.setAttribute("aria-label", `${button.textContent}: ${name}`);
+      button.addEventListener("click", () => onFreeze(tabId));
+      const item = doc.createElement("li");
+      item.append(title, button);
+      return [item];
+    }),
   );
 }

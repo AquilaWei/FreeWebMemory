@@ -7,11 +7,16 @@
     <style>
       body { font: 14px system-ui, sans-serif; margin: 12px; min-width: 260px; }
       h1 { font-size: 16px; margin: 0 0 8px; }
+      h2 { font-size: 14px; margin: 12px 0 4px; }
       dl { margin: 8px 0; }
       dt { color: #555; }
       dd { margin: 0 0 6px; font-weight: 600; }
       button { display: block; width: 100%; margin: 6px 0; padding: 6px; }
       input[type=number] { width: 5em; }
+      #tab-list { list-style: none; margin: 4px 0; padding: 0; max-height: 220px; overflow-y: auto; }
+      #tab-list li { display: flex; gap: 6px; align-items: center; margin: 2px 0; }
+      #tab-list .tab-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #tab-list button { width: auto; margin: 0; padding: 2px 8px; }
       #status { min-height: 1.2em; color: #555; }
     </style>
   </head>
@@ -31,6 +36,8 @@
         <dd id="system-memory">unknown</dd>
       </dl>
       <button type="button" id="discard-now">Discard other tabs now</button>
+      <h2 id="tabs-heading">Freeze a single tab</h2>
+      <ul id="tab-list" aria-labelledby="tabs-heading"></ul>
       <button type="button" id="never-discard">Never discard this site</button>
       <button type="button" id="reset-stats">Reset statistics</button>
       <button type="button" id="open-options">More settings</button>

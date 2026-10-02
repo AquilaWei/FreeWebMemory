@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decideDiscard, type TabInfo } from "../src/policy";
+import { decideDiscard, decideManualDiscard, type TabInfo } from "../src/policy";
 import { DEFAULT_SETTINGS, type Settings } from "../src/settings";
 
 const MIN = 60_000;
@@ -125,5 +125,31 @@ describe("decideDiscard", () => {
     const s = { ...settings, whitelist: ["example.com"] };
     const t = { ...tab, url: "https://notexample.com/" };
     expect(decideDiscard(t, 0, s, NOW)).toEqual({ discard: true });
+  });
+});
+
+describe("decideManualDiscard", () => {
+  it("approves a pinned, audible tab because the user chose it", () => {
+    expect(decideManualDiscard({ url: "https://example.com/", active: false, discarded: false })).toEqual({ discard: true });
+  });
+
+  it("refuses the active tab", () => {
+    expect(decideManualDiscard({ url: "https://example.com/", active: true, discarded: false })).toEqual({
+      discard: false,
+      reason: "active",
+    });
+  });
+
+  it("refuses an already discarded tab", () => {
+    expect(decideManualDiscard({ url: "https://example.com/", active: false, discarded: true })).toEqual({
+      discard: false,
+      reason: "discarded",
+    });
+  });
+
+  it("refuses chrome:// pages and tabs without a url", () => {
+    const refused = { discard: false, reason: "unsupported_url" };
+    expect(decideManualDiscard({ url: "chrome://extensions", active: false, discarded: false })).toEqual(refused);
+    expect(decideManualDiscard({ active: false, discarded: false })).toEqual(refused);
   });
 });

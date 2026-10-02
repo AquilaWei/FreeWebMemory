@@ -9,6 +9,7 @@ let sync: Record<string, unknown>;
 let session: Record<string, unknown>;
 let tabs: Partial<chrome.tabs.Tab>[];
 let discard: ReturnType<typeof vi.fn>;
+let getTab: ReturnType<typeof vi.fn>;
 let getMemoryInfo: ReturnType<typeof vi.fn>;
 
 function tab(id: number, extra: Partial<chrome.tabs.Tab> = {}): Partial<chrome.tabs.Tab> {
@@ -37,10 +38,11 @@ beforeEach(() => {
   session = {};
   tabs = [];
   discard = vi.fn(async () => ({}));
+  getTab = vi.fn(async (id: number) => tabs.find((t) => t.id === id));
   getMemoryInfo = vi.fn(async () => ({ capacity: 100, availableCapacity: 90 })); // plenty free
   vi.stubGlobal("chrome", {
     storage: { sync: area(sync), session: area(session) },
-    tabs: { query: async () => tabs, discard },
+    tabs: { query: async () => tabs, get: getTab, discard },
     system: { memory: { getInfo: getMemoryInfo } },
   });
 });
@@ -260,6 +262,44 @@ describe("ActivityTracker.discardNow", () => {
     const result = await new ActivityTracker(() => NOW).discardNow();
 
     expect(result).toEqual([]);
+  });
+});
+
+describe("ActivityTracker.freezeTab", () => {
+  it("discards a pinned, audible tab the user picked", async () => {
+    tabs = [tab(1, { pinned: true, audible: true })];
+
+    expect(await new ActivityTracker(() => NOW).freezeTab(1)).toBe(true);
+    expect(discard).toHaveBeenCalledWith(1);
+  });
+
+  it("discards a whitelisted tab even when automatic discarding is off", async () => {
+    sync.settings = { ...DEFAULT_SETTINGS, enabled: false, whitelist: ["site1.example"] };
+    tabs = [tab(1)];
+
+    expect(await new ActivityTracker(() => NOW).freezeTab(1)).toBe(true);
+  });
+
+  it("refuses the active tab without calling discard", async () => {
+    tabs = [tab(1, { active: true })];
+
+    expect(await new ActivityTracker(() => NOW).freezeTab(1)).toBe(false);
+    expect(discard).not.toHaveBeenCalled();
+  });
+
+  it("returns false when the tab no longer exists", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    getTab.mockRejectedValueOnce(new Error("No tab with id"));
+
+    expect(await new ActivityTracker(() => NOW).freezeTab(9)).toBe(false);
+  });
+
+  it("returns false when Chrome refuses to discard", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    tabs = [tab(1)];
+    discard.mockRejectedValueOnce(new Error("cannot discard"));
+
+    expect(await new ActivityTracker(() => NOW).freezeTab(1)).toBe(false);
   });
 });
 

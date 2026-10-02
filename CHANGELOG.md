@@ -16,3 +16,4 @@
 - Options page: edit every setting (including the memory-pressure threshold) and the site whitelist, with clear messages for invalid input (nothing is saved until it is fixed), plus export and import of settings as JSON.
 - Packaging: `npm run package` builds a reproducible zip plus SHA256 checksum, and a GitHub Actions workflow runs lint, tests, build and package on every push. Tests guard against new permissions, remote code and network calls. The README lists each permission with its reason and what still needs a real-browser check.
 - Popup: set how many idle minutes pass before a tab is discarded, and open the full options page with "More settings".
+- Popup: a tab list with a Freeze button to discard one specific tab right away. Pinned, playing, unsaved and whitelisted tabs can be frozen this way since you chose them; the tab in use, frozen tabs and non-web pages cannot.

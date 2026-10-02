@@ -126,6 +126,44 @@ describe("initPopup", () => {
     expect(openOptionsPage).toHaveBeenCalledOnce();
   });
 
+  it("lists the window's tabs with a Freeze button for a freezable one", async () => {
+    activeTabs = [{ id: 1, title: "Docs", url: "https://a.example/", active: false, discarded: false }];
+    await initPopup(document);
+    const button = document.querySelector<HTMLButtonElement>("#tab-list li button")!;
+    expect(document.querySelector("#tab-list .tab-title")!.textContent).toBe("Docs");
+    expect(button.textContent).toBe("Freeze");
+    expect(button.disabled).toBe(false);
+  });
+
+  it("disables the button of the active, frozen and unsupported tabs and says why", async () => {
+    activeTabs = [
+      { id: 1, title: "A", url: "https://a.example/", active: true, discarded: false },
+      { id: 2, title: "B", url: "https://b.example/", active: false, discarded: true },
+      { id: 3, title: "C", url: "chrome://extensions", active: false, discarded: false },
+    ];
+    await initPopup(document);
+    const buttons = [...document.querySelectorAll<HTMLButtonElement>("#tab-list button")];
+    expect(buttons.map((b) => b.textContent)).toEqual(["In use", "Frozen", "Not supported"]);
+    expect(buttons.every((b) => b.disabled)).toBe(true);
+  });
+
+  it("sends freeze-tab with the tab id when Freeze is clicked", async () => {
+    activeTabs = [{ id: 42, title: "Docs", url: "https://a.example/", active: false, discarded: false }];
+    sendMessage.mockResolvedValueOnce({ frozen: true });
+    await initPopup(document);
+    document.querySelector<HTMLButtonElement>("#tab-list button")!.click();
+    await vi.waitFor(() => expect(el("status").textContent).toBe("Tab frozen."));
+    expect(sendMessage).toHaveBeenCalledWith({ type: "freeze-tab", tabId: 42 });
+  });
+
+  it("reports when the background could not freeze the tab", async () => {
+    activeTabs = [{ id: 42, title: "Docs", url: "https://a.example/", active: false, discarded: false }];
+    sendMessage.mockResolvedValueOnce({ frozen: false });
+    await initPopup(document);
+    document.querySelector<HTMLButtonElement>("#tab-list button")!.click();
+    await vi.waitFor(() => expect(el("status").textContent).toBe("This tab cannot be frozen."));
+  });
+
   it("sends a discard-now message and reports how many tabs were discarded", async () => {
     await initPopup(document);
     await click("discard-now");

@@ -1,5 +1,5 @@
 import { isDirtyMessage } from "./content/messages";
-import { isDiscardNowMessage, type DiscardNowResponse } from "./messages";
+import { isDiscardNowMessage, isFreezeTabMessage, type DiscardNowResponse, type FreezeTabResponse } from "./messages";
 import { StatsRecorder } from "./stats";
 import { ActivityTracker, SWEEP_ALARM } from "./tracker";
 
@@ -45,7 +45,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === SWEEP_ALARM) void tracker.sweep().then(recordDiscards);
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse: (response: DiscardNowResponse) => void) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse: (response: DiscardNowResponse | FreezeTabResponse) => void) => {
   if (sender.id !== chrome.runtime.id) return;
   // The popup is an extension page, so unlike a content script it has no tab.
   if (sender.tab === undefined && isDiscardNowMessage(message)) {
@@ -60,6 +60,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse: (response: 
         sendResponse({ discarded: 0 });
       });
     return true; // keep the channel open for the async response
+  }
+  if (sender.tab === undefined && isFreezeTabMessage(message)) {
+    tracker
+      .freezeTab(message.tabId)
+      .then(async (frozen) => {
+        if (frozen) await recordDiscards([message.tabId]);
+        sendResponse({ frozen });
+      })
+      .catch((err) => {
+        console.warn("Freeze tab failed", err);
+        sendResponse({ frozen: false });
+      });
+    return true;
   }
   // Dirty reports come only from our content scripts, which always run inside a tab.
   if (sender.tab?.id !== undefined && isDirtyMessage(message)) void tracker.setDirty(sender.tab.id, message.dirty);

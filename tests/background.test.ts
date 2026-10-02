@@ -61,6 +61,7 @@ beforeEach(() => {
     },
     tabs: {
       query: async () => tabs,
+      get: async (id: number) => tabs.find((t) => t.id === id),
       discard,
       onActivated: event("activated"),
       onRemoved: event("removed"),
@@ -209,6 +210,44 @@ describe("background wiring", () => {
 
     listeners.message({ type: "discard-now" }, { id: "other" }, sendResponse);
     listeners.message({ type: "discard-now" }, { id: "me", tab: { id: 3 } }, sendResponse);
+    await new Promise((r) => setTimeout(r, 20));
+
+    expect(discard).not.toHaveBeenCalled();
+    expect(sendResponse).not.toHaveBeenCalled();
+  });
+
+  it("freezes the requested tab for the popup and counts it in the stats", async () => {
+    tabs = [{ ...idleTab, pinned: true }];
+    await loadBackground();
+    const sendResponse = vi.fn();
+
+    const keepOpen = listeners.message({ type: "freeze-tab", tabId: 1 }, { id: "me" }, sendResponse);
+
+    expect(keepOpen).toBe(true);
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledWith({ frozen: true }));
+    expect(discard).toHaveBeenCalledWith(1);
+    expect(local.stats).toEqual({ discardedCount: 1, estimatedBytesSaved: 100 * 1024 * 1024 });
+  });
+
+  it("answers frozen false for the active tab", async () => {
+    tabs = [{ ...idleTab, active: true }];
+    await loadBackground();
+    const sendResponse = vi.fn();
+
+    listeners.message({ type: "freeze-tab", tabId: 1 }, { id: "me" }, sendResponse);
+
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledWith({ frozen: false }));
+    expect(discard).not.toHaveBeenCalled();
+  });
+
+  it("ignores freeze-tab from another extension, a content script and a malformed message", async () => {
+    tabs = [idleTab];
+    await loadBackground();
+    const sendResponse = vi.fn();
+
+    listeners.message({ type: "freeze-tab", tabId: 1 }, { id: "other" }, sendResponse);
+    listeners.message({ type: "freeze-tab", tabId: 1 }, { id: "me", tab: { id: 3 } }, sendResponse);
+    listeners.message({ type: "freeze-tab", tabId: "1" }, { id: "me" }, sendResponse);
     await new Promise((r) => setTimeout(r, 20));
 
     expect(discard).not.toHaveBeenCalled();

@@ -29,6 +29,16 @@ function isWhitelisted(hostname: string, whitelist: readonly string[]): boolean 
   return whitelist.some((entry) => hostname === entry || hostname.endsWith(`.${entry}`));
 }
 
+/** The URL if it is a readable http(s) address, otherwise null. */
+function parseWebUrl(raw: string | undefined): URL | null {
+  try {
+    const url = new URL(raw ?? "");
+    return url.protocol === "http:" || url.protocol === "https:" ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Decides whether a tab may be discarded. Checks run in a fixed order and the
  * first failing one is reported, so every refusal has exactly one reason.
@@ -52,15 +62,8 @@ export function decideDiscard(
   if (tab.audible && settings.protectAudible) return { discard: false, reason: "audible" };
   if (tab.dirty && settings.protectFormDirty) return { discard: false, reason: "dirty" };
 
-  let url: URL;
-  try {
-    url = new URL(tab.url ?? "");
-  } catch {
-    return { discard: false, reason: "unsupported_url" };
-  }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    return { discard: false, reason: "unsupported_url" };
-  }
+  const url = parseWebUrl(tab.url);
+  if (url === null) return { discard: false, reason: "unsupported_url" };
   if (isWhitelisted(url.hostname.toLowerCase(), settings.whitelist)) {
     return { discard: false, reason: "whitelisted" };
   }
@@ -68,5 +71,19 @@ export function decideDiscard(
   if (nowMs - lastActiveMs < settings.idleMinutes * 60_000) {
     return { discard: false, reason: "not_idle" };
   }
+  return { discard: true };
+}
+
+/**
+ * Decides whether the user may discard this one tab by hand. The user chose the tab
+ * explicitly, so pinned, audible, unsaved-input and whitelist protections (and the
+ * idle threshold and "enabled" switch) do not apply; only tabs Chrome cannot or
+ * should not discard are refused: the active tab, an already discarded tab, and
+ * anything that is not an http(s) page.
+ */
+export function decideManualDiscard(tab: Pick<TabInfo, "url" | "active" | "discarded">): DiscardDecision {
+  if (tab.active) return { discard: false, reason: "active" };
+  if (tab.discarded) return { discard: false, reason: "discarded" };
+  if (parseWebUrl(tab.url) === null) return { discard: false, reason: "unsupported_url" };
   return { discard: true };
 }

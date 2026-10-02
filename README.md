@@ -9,7 +9,7 @@ A **Chrome (Manifest V3)** extension that saves memory by discarding idle tabs, 
 - **Discards idle tabs** (default 30 min) so Chrome frees their memory; a discarded tab reloads when you click it.
 - **Never touches** the active tab, pinned tabs, tabs playing sound, tabs with unsaved form input, your whitelisted sites, or non-web pages.
 - **Memory-pressure mode:** when free system memory drops under a threshold (default 10%), discards the least recently used eligible tabs first.
-- **Popup:** on/off switch, tabs discarded, estimated memory saved, "Discard other tabs now", "Never discard this site", an idle-minutes field and a "More settings" button that opens the options page.
+- **Popup:** on/off switch, tabs discarded, estimated memory saved, "Discard other tabs now", "Never discard this site", an idle-minutes field a "More settings" button that opens the options page, and a tab list where **Freeze** discards one chosen tab on demand (ignores the pinned, sound, unsaved-input and whitelist protections because you picked it; the tab in use, already frozen tabs and non-http(s) pages cannot be frozen).
 - **Options page:** every setting, the whitelist, and JSON export/import.
 
 ## Build

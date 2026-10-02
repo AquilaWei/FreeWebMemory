@@ -1,8 +1,8 @@
-import type { DiscardNowMessage, DiscardNowResponse } from "../messages";
+import type { DiscardNowMessage, DiscardNowResponse, FreezeTabMessage, FreezeTabResponse } from "../messages";
 import { loadSettings, saveSettings, whitelistSite } from "../settings";
 import { loadStats, resetStats } from "../stats";
 import { IDLE_MINUTES_ERROR, parseIdleMinutes } from "../options/validate";
-import { renderStats, type MemoryInfo } from "./render";
+import { renderStats, renderTabs, type MemoryInfo } from "./render";
 
 function byId<T extends HTMLElement>(doc: Document, id: string): T {
   const el = doc.getElementById(id);
@@ -35,7 +35,17 @@ export async function initPopup(doc: Document): Promise<void> {
       say("Something went wrong. Please try again.");
     }
   };
-  const refresh = async () => renderStats(doc, await loadStats(), await readMemory());
+  const refresh = async () => {
+    renderStats(doc, await loadStats(), await readMemory());
+    renderTabs(doc, await chrome.tabs.query({ currentWindow: true }), onFreeze);
+  };
+  const onFreeze = (tabId: number) =>
+    void guarded(async () => {
+      const message: FreezeTabMessage = { type: "freeze-tab", tabId };
+      const response = (await chrome.runtime.sendMessage(message)) as FreezeTabResponse;
+      say(response.frozen ? "Tab frozen." : "This tab cannot be frozen.");
+      await refresh();
+    })();
 
   const idleMinutes = byId<HTMLInputElement>(doc, "idle-minutes");
   const initial = await loadSettings();
